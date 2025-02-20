@@ -109,12 +109,6 @@ public class BedwarsStatsCommand {
             UChat.chat(Player + " is not cached");
             return;
         }
-        rank = null;
-        special = null;
-        monthly = null;
-        MVPPlusPlusCheck = null;
-        plusColor = null;
-        admin = null;
         Ranks rankStuff = Addition.playerRanks.get(Player);
         rank = rankStuff.getRank();
         special = rankStuff.getSpecial();
@@ -204,21 +198,26 @@ public class BedwarsStatsCommand {
         else Bedwarsbblr = Bedwarsbb;
         Bedwarsbblr = (double) Math.round(Bedwarsbblr * 100) / 100;
 
-        UChat.chat("§9------------------------------------------");
-        UChat.chat(getFormattedRank(Bedwarsstar) + " " + formatRank(profile, Username));
-        UChat.chat("FKDR: " + Bedwarsfkdr);
-        UChat.chat("Final kills: " + Bedwarsfk);
-        UChat.chat("WLR: " + Bedwarswlr);
-        UChat.chat("Wins: " + Bedwarsw);
-        UChat.chat("BBLR: " + Bedwarsbblr);
-        UChat.chat("Beds: " + Bedwarsbb);
-        if(Bedwarsws != -1) UChat.chat("Winstreak: " + Bedwarsws);
-        UChat.chat("§9------------------------------------------");
-        if(Addition.bedwarsStatsList.containsKey(Username)) Addition.bedwarsStatsList.remove(Username);
+        if (Bedwarsl != 0 || Bedwarsw != 0) {
+            UChat.chat("§9------------------------------------------");
+            UChat.chat(getFormattedRank(Bedwarsstar) + " " + formatRank(profile, Username));
+            UChat.chat("FKDR: " + Bedwarsfkdr);
+            UChat.chat("Final kills: " + Bedwarsfk);
+            UChat.chat("WLR: " + Bedwarswlr);
+            UChat.chat("Wins: " + Bedwarsw);
+            UChat.chat("BBLR: " + Bedwarsbblr);
+            UChat.chat("Beds: " + Bedwarsbb);
+            if(Bedwarsws != -1) UChat.chat("Winstreak: " + Bedwarsws);
+            UChat.chat("§9------------------------------------------");
+            Addition.bedwarsStatsList.remove(Username);
+            Addition.bedwarsStatsList.put(Username, new Bedwars(Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws, Bedwarsfkdr, Bedwarswlr, Bedwarsbblr));
+        } else {
+            UChat.chat(Username + " has never played Bedwars");
+        }
+
         if(Addition.duelsStatsList.containsKey(Username) && (Duelslosses != 0 || Duelswins != 0)) Addition.duelsStatsList.remove(Username);
         if (Duelslosses != 0 || Duelswins != 0) Addition.duelsStatsList.put(Username, new Duels(Duelskills, Duelsdeaths, Duelswins, Duelslosses, Duelscws, Duelsbws, Duelswlr, Duelskdr, Level));
-        Addition.bedwarsStatsList.put(Username, new Bedwars(Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws, Bedwarsfkdr, Bedwarswlr, Bedwarsbblr));
-        if (Addition.playerRanks.containsKey(Username)) Addition.playerRanks.remove(Username);
+        Addition.playerRanks.remove(Username);
         Addition.playerRanks.put(Username, new Ranks(rank, special, monthly, MVPPlusPlusCheck, plusColor, admin));
     }
 
@@ -234,8 +233,11 @@ public class BedwarsStatsCommand {
     private String rank, special, monthly, MVPPlusPlusCheck, plusColor, admin;
 
     private String formatWithoutRequestRank(String Player) {
+        if(admin != null && admin.equals("§6[MOJANG]")) return "§6[MOJANG] " + Username;
         if(Player.equals("Technoblade")) {
             Player = "§d[PIG§b+++§d] " + Username;
+        } else if (Player.equals("TommyInnit")) {
+            Player = "§d[INNIT] " + Username;
         } else if (special.equals("YOUTUBER")) {
             Player = "§c[§fYOUTUBE§c] " + Username;
         } else if (special.equals("ADMIN")) {
@@ -361,6 +363,8 @@ public class BedwarsStatsCommand {
     }
 
     private String formatRank(JsonObject profile,String Player) {
+        String admin = getString(profile, "prefix");
+        if(admin.equals("§6[MOJANG]")) return "§6[MOJANG] " + Username;
         if(getString(profile, "newPackageRank") != null) {
             rank = getString(profile, "newPackageRank");
         } else {
@@ -377,10 +381,12 @@ public class BedwarsStatsCommand {
 
         if(Player.equals("Technoblade")) {
             Player = "§d[PIG§b+++§d] " + Username;
+        } else if (Player.equals("TommyInnit")) {
+            Player = "§d[INNIT] " + Username;
         } else if (special.equals("YOUTUBER")) {
             Player = "§c[§fYOUTUBE§c] " + Username;
         } else if (special.equals("ADMIN")) {
-            String admin = getString(profile, "prefix");
+
             if(admin != null && admin.equals("§c[OWNER]")) {
                 Player = "§c[OWNER] " + Username;
             } else {
