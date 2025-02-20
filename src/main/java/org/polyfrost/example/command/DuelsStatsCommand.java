@@ -114,12 +114,6 @@ public class DuelsStatsCommand {
             UChat.chat(Player + " is not cached");
             return;
         }
-        rank = null;
-        special = null;
-        monthly = null;
-        MVPPlusPlusCheck = null;
-        plusColor = null;
-        admin = null;
         Ranks rankStuff = Addition.playerRanks.get(Player);
         rank = rankStuff.getRank();
         special = rankStuff.getSpecial();
@@ -210,24 +204,28 @@ public class DuelsStatsCommand {
         else Bedwarsbblr = Bedwarsbb;
         Bedwarsbblr = (double) Math.round(Bedwarsbblr * 100) / 100;
 
-        UChat.chat("§9------------------------------------------");
-        UChat.chat(getPlayerDivision(Duelswins) + formatRank(profile, Username));
-        UChat.chat("Level: " + Level);
-        UChat.chat("WLR: " + Duelswlr);
-        UChat.chat("Wins: " + Duelswins);
-        UChat.chat("KDR: " + Duelskdr);
-        UChat.chat("Kills: " + Duelskills);
-        if(Duelscws != -1 && Duelsbws != -1) {
-            UChat.chat("Current Winstreak: " + Duelscws);
-            UChat.chat("Best Winstreak: " + Duelsbws);
+        if (Duelswins != 0 || Duelslosses != 0) {
+            UChat.chat("§9------------------------------------------");
+            UChat.chat(getPlayerDivision(Duelswins) + formatRank(profile, Username));
+            UChat.chat("Level: " + Level);
+            UChat.chat("WLR: " + Duelswlr);
+            UChat.chat("Wins: " + Duelswins);
+            UChat.chat("KDR: " + Duelskdr);
+            UChat.chat("Kills: " + Duelskills);
+            if(Duelscws != -1 && Duelsbws != -1) {
+                UChat.chat("Current Winstreak: " + Duelscws);
+                UChat.chat("Best Winstreak: " + Duelsbws);
+            }
+            UChat.chat("§9------------------------------------------");
+            Addition.duelsStatsList.remove(Username);
+            Addition.duelsStatsList.put(Username, new Duels(Duelskills, Duelsdeaths, Duelswins, Duelslosses, Duelscws, Duelsbws, Duelswlr, Duelskdr, Level));
+        } else {
+            UChat.chat(Username + " has never played Duels");
         }
-        UChat.chat("§9------------------------------------------");
-        if(Addition.duelsStatsList.containsKey(Username)) Addition.duelsStatsList.remove(Username);
+
         if(Addition.bedwarsStatsList.containsKey(Username) && (Bedwarsl != 0 || Bedwarsw != 0)) Addition.bedwarsStatsList.remove(Username);
         if(Bedwarsl != 0 || Bedwarsw != 0) Addition.bedwarsStatsList.put(Username, new Bedwars(Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws, Bedwarsfkdr, Bedwarswlr, Bedwarsbblr));
-        Addition.duelsStatsList.put(Username, new Duels(Duelskills, Duelsdeaths, Duelswins, Duelslosses, Duelscws, Duelsbws, Duelswlr, Duelskdr, Level));
-        if (Addition.playerRanks.containsKey(Username)) Addition.playerRanks.remove(Username);
-        if(Addition.playerRanks.containsKey(Username)) Addition.playerRanks.remove(Username);
+        Addition.playerRanks.remove(Username);
         Addition.playerRanks.put(Username, new Ranks(rank, special, monthly, MVPPlusPlusCheck, plusColor, admin));
     }
 
@@ -249,8 +247,12 @@ public class DuelsStatsCommand {
     private String rank, special, monthly, MVPPlusPlusCheck, plusColor, admin;
 
     private String formatWithoutRequestRank(String Player) {
+        if(admin != null && admin.equals("§6[MOJANG]")) return "§6[MOJANG] " + Username;
+
         if(Player.equals("Technoblade")) {
             Player = "§d[PIG§b+++§d] " + Username;
+        } else if (Player.equals("TommyInnit")) {
+            Player = "§d[INNIT] " + Username;
         } else if (special.equals("YOUTUBER")) {
             Player = "§c[§fYOUTUBE§c] " + Username;
         } else if (special.equals("ADMIN")) {
@@ -376,6 +378,8 @@ public class DuelsStatsCommand {
     }
 
     private String formatRank(JsonObject profile,String Player) {
+        String admin = getString(profile, "prefix");
+        if(admin.equals("§6[MOJANG]")) return "§6[MOJANG] " + Username;
         if(getString(profile, "newPackageRank") != null) {
             rank = getString(profile, "newPackageRank");
         } else {
@@ -392,10 +396,12 @@ public class DuelsStatsCommand {
 
         if(Player.equals("Technoblade")) {
             Player = "§d[PIG§b+++§d] " + Username;
+        } else if (Player.equals("TommyInnit")) {
+            Player = "§d[INNIT] " + Username;
         } else if (special.equals("YOUTUBER")) {
             Player = "§c[§fYOUTUBE§c] " + Username;
         } else if (special.equals("ADMIN")) {
-            String admin = getString(profile, "prefix");
+
             if(admin != null && admin.equals("§c[OWNER]")) {
                 Player = "§c[OWNER] " + Username;
             } else {
@@ -709,6 +715,7 @@ public class DuelsStatsCommand {
         if (wins < 100) {
             return "";
         }
+
         return DIVISIONS.floorEntry(wins).getValue() + " ";
     }
 }
