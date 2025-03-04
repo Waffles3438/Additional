@@ -1,7 +1,9 @@
 package org.polyfrost.example.config;
 
+import cc.polyfrost.oneconfig.config.annotations.Info;
 import cc.polyfrost.oneconfig.config.annotations.Slider;
 import cc.polyfrost.oneconfig.config.annotations.Text;
+import cc.polyfrost.oneconfig.config.data.InfoType;
 import org.polyfrost.example.Addition;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
@@ -48,6 +50,12 @@ public class ModConfig extends Config {
             subcategory = "Nametags"
     )
     public static boolean nametagsThroughWalls = false;
+
+    @Info(
+            text = "Showing nametags infront of water and stained glass is is buggy",
+            type = InfoType.INFO
+    )
+    public static boolean ignored2;
 
     @Text(
             name = "Hypixel API",
