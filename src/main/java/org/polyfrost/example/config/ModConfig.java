@@ -53,7 +53,8 @@ public class ModConfig extends Config {
 
     @Info(
             text = "Showing nametags infront of water and stained glass is is buggy",
-            type = InfoType.INFO
+            type = InfoType.ERROR,
+            size = OptionSize.DUAL
     )
     public static boolean ignored2;
 
