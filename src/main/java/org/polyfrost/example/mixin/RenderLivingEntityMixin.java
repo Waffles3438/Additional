@@ -71,7 +71,7 @@ public class RenderLivingEntityMixin {
     }
     
     public boolean isBot(Entity entity){
-        if (entity instanceof EntityPlayer && (((EntityPlayer) entity).getDisplayNameString().contains("§c")
+        if (entity instanceof EntityPlayer && ((((EntityPlayer) entity).getDisplayNameString().contains("§c") && (entity.getUniqueID().version() == 2))
                 || ((EntityPlayer) entity).getDisplayNameString().contains("[NPC]")
                 || ((EntityPlayer) entity).getDisplayNameString().contains("[BOT]")
                 || ((EntityPlayer) entity).getDisplayNameString().contains("iAT3")
