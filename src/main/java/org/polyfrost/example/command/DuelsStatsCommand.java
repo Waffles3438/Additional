@@ -248,7 +248,6 @@ public class DuelsStatsCommand {
 
     private String formatWithoutRequestRank(String Player) {
         if(admin != null && admin.equals("§6[MOJANG]")) return "§6[MOJANG] " + Username;
-
         if(Player.equals("Technoblade")) {
             Player = "§d[PIG§b+++§d] " + Username;
         } else if (Player.equals("TommyInnit")) {
@@ -379,7 +378,7 @@ public class DuelsStatsCommand {
 
     private String formatRank(JsonObject profile,String Player) {
         String admin = getString(profile, "prefix");
-        if(admin.equals("§6[MOJANG]")) return "§6[MOJANG] " + Username;
+        if(admin != null && admin.equals("§6[MOJANG]")) return "§6[MOJANG] " + Username;
         if(getString(profile, "newPackageRank") != null) {
             rank = getString(profile, "newPackageRank");
         } else {
