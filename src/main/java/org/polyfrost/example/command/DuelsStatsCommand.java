@@ -8,6 +8,7 @@ import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.minecraft.client.Minecraft;
 import org.polyfrost.example.Addition;
 import org.polyfrost.example.config.ModConfig;
 import org.polyfrost.example.util.Bedwars;
@@ -38,6 +39,75 @@ public class DuelsStatsCommand {
     private String Level;
 
     @Main
+    private void main() {
+        String player = Minecraft.getMinecraft().getSession().getProfile().getName();
+
+        Multithreading.runAsync(() -> {
+            boolean request = true;
+            try {
+                uuid = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("id").getAsString();
+                Username = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("name").getAsString();
+            } catch (Exception e) {
+                UChat.chat("Invalid player");
+                return;
+            }
+
+            connection = newConnection("https://api.hypixel.net/player?key=" + ModConfig.api + "&uuid=" + uuid);
+            if (connection.isEmpty()) {
+                request = false;
+            }
+
+            if(request) {
+                if (connection.equals("{\"success\":true,\"player\":null}")) {
+                    // player is nicked
+                    UChat.chat(Username + " has never logged on Hypixel");
+                    return;
+                }
+
+                try {
+                    profile = getStringAsJson(connection).getAsJsonObject("player");
+                    d = profile.getAsJsonObject("stats").getAsJsonObject("Duels");
+                    ach = profile.getAsJsonObject("achievements");
+                } catch (NullPointerException er) {
+                    // never played duels or joined lobby
+                    UChat.chat(Username + " has never played Duels");
+                    try {
+                        profile = getStringAsJson(connection).getAsJsonObject("player");
+                        bw = profile.getAsJsonObject("stats").getAsJsonObject("Bedwars");
+                        ach = profile.getAsJsonObject("achievements");
+                        Bedwarsstar = getValue(ach, "bedwars_level");
+                        Bedwarsfk = getValue(bw, "final_kills_bedwars");
+                        Bedwarsbb = getValue(bw, "beds_broken_bedwars");
+                        Bedwarsw = getValue(bw, "wins_bedwars");
+                        Bedwarsfd = getValue(bw, "final_deaths_bedwars");
+                        Bedwarsl = getValue(bw, "losses_bedwars");
+                        Bedwarsbl = getValue(bw, "beds_lost_bedwars");
+                        Bedwarsws = getValue(bw, "winstreak");
+
+                        if (Bedwarsfd != 0) Bedwarsfkdr = (double) Bedwarsfk / (double) Bedwarsfd;
+                        else Bedwarsfkdr = Bedwarsfk;
+                        Bedwarsfkdr = (double) Math.round(Bedwarsfkdr * 100) / 100;
+
+                        if (Bedwarsl != 0) Bedwarswlr = (double) Bedwarsw / (double) Bedwarsl;
+                        else Bedwarswlr = Bedwarsw;
+                        Bedwarswlr = (double) Math.round(Bedwarswlr * 100) / 100;
+
+                        if (Bedwarsbl != 0) Bedwarsbblr = (double) Bedwarsbb / (double) Bedwarsbl;
+                        else Bedwarsbblr = Bedwarsbb;
+                        Bedwarsbblr = (double) Math.round(Bedwarsbblr * 100) / 100;
+
+                        if(Bedwarsw != 0 && Bedwarsl != 0) Addition.bedwarsStatsList.put(Username, new Bedwars(Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws, Bedwarsfkdr, Bedwarswlr, Bedwarsbblr));
+                    } catch (NullPointerException err) {
+                        // never played bedwars
+                    }
+                    return;
+                }
+                requestStats(player);
+            } else getStats(Username);
+        });
+    }
+
+    @Main
     private void main(@Greedy String player) {
         if(player.isEmpty()) {
             UChat.chat("Enter a username");
@@ -45,7 +115,7 @@ public class DuelsStatsCommand {
         }
 
         Multithreading.runAsync(() -> {
-            Boolean request = true;
+            boolean request = true;
             try {
                 uuid = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("id").getAsString();
                 Username = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("name").getAsString();
