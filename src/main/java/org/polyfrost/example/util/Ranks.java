@@ -1,7 +1,7 @@
 package org.polyfrost.example.util;
 
 public class Ranks {
-    private String rank, special, monthly, MVPPlusPlusCheck, plusColor, admin;
+    private final String rank, special, monthly, MVPPlusPlusCheck, plusColor, admin;
 
     public Ranks(String ranks, String special, String monthly, String MVPPlusPlusCheck, String plusColor, String admin) {
         this.rank = ranks;

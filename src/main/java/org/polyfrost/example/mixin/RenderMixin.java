@@ -1,8 +1,5 @@
 package org.polyfrost.example.mixin;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.network.NetHandlerPlayClient;
-import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.entity.Entity;
@@ -13,8 +10,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.ArrayList;
 
 @Mixin(value = Render.class)
 public class RenderMixin {
@@ -61,35 +56,19 @@ public class RenderMixin {
     }
 
     public boolean isBot(Entity entity){
-        if (entity instanceof EntityPlayer && ((((EntityPlayer) entity).getDisplayNameString().contains("§c") && (entity.getUniqueID().version() == 2))
-                || ((EntityPlayer) entity).getDisplayNameString().contains("[NPC]")
-                || ((EntityPlayer) entity).getDisplayNameString().contains("[BOT]")
-                || ((EntityPlayer) entity).getDisplayNameString().contains("iAT3")
-                || ((EntityPlayer) entity).getDisplayNameString().isEmpty()
-                || (entity.getUniqueID().version() == 2)
-                || ((EntityPlayer) entity).getDisplayNameString().contains("§") && (((EntityPlayer) entity).getDisplayNameString().contains("SHOP") || ((EntityPlayer) entity).getDisplayNameString().contains("UPGRADE")))) {
+        if (entity.getUniqueID().version() == 2 ||
+                entity instanceof EntityPlayer &&
+                        (entity.getName().contains("[NPC]")
+                                || entity.getName().contains("[BOT]")
+                                || entity.getName().contains("iAT3")
+                                || entity.getName() == null
+                                || entity.getName().contains("npc-")
+                                || (entity.getName().contains("§") && (entity.getName().contains("SHOP") || entity.getName().contains("UPGRADE"))))
+        ) {
             return true;
         } else {
-            for (String name : getAllPlayerNamesFromTabList()) {
-                if (entity instanceof EntityPlayer && ((EntityPlayer) entity).getDisplayNameString().contains(name)) {
-                    return false;
-                }
-            }
-            return true;
+            return !(entity instanceof EntityPlayer);
         }
-    }
-
-    public ArrayList<String> getAllPlayerNamesFromTabList() {
-        ArrayList<String> playerNames = new ArrayList<>();
-        NetHandlerPlayClient netHandler = Minecraft.getMinecraft().getNetHandler();
-
-        if (netHandler != null) {
-            for (NetworkPlayerInfo info : netHandler.getPlayerInfoMap()) {
-                playerNames.add(info.getGameProfile().getName());
-            }
-        }
-
-        return playerNames;
     }
 
 }

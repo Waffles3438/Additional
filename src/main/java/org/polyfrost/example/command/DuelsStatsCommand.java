@@ -102,7 +102,7 @@ public class DuelsStatsCommand {
                     }
                     return;
                 }
-                requestStats(player);
+                requestStats();
             } else getStats(Username);
         });
     }
@@ -174,7 +174,7 @@ public class DuelsStatsCommand {
                     }
                     return;
                 }
-                requestStats(player);
+                requestStats();
             } else getStats(Username);
         });
     }
@@ -215,7 +215,7 @@ public class DuelsStatsCommand {
         UChat.chat("§9------------------------------------------");
     }
 
-    private void requestStats(String player){
+    private void requestStats(){
         try {
             profile = getStringAsJson(connection).getAsJsonObject("player");
             d = profile.getAsJsonObject("stats").getAsJsonObject("Duels");
@@ -249,7 +249,7 @@ public class DuelsStatsCommand {
 
         try {
             bw = profile.getAsJsonObject("stats").getAsJsonObject("Bedwars");
-        } catch (NullPointerException e) {
+        } catch (NullPointerException ignored) {
 
         }
 
@@ -623,7 +623,7 @@ public class DuelsStatsCommand {
             url = new URL(link);
             con = (HttpURLConnection) url.openConnection();
             result = getContents(con);
-        } catch (IOException e) { }
+        } catch (IOException ignored) { }
         finally {
             if (con != null) con.disconnect();
         }
@@ -640,19 +640,18 @@ public class DuelsStatsCommand {
                     sb.append(input);
                 }
                 return sb.toString();
-            } catch (IOException e) { }
+            } catch (IOException ignored) { }
         }
         return "";
     }
 
-    private double BASE = 10_000;
-    private double GROWTH = 2_500;
-    private double HALF_GROWTH = 0.5 * GROWTH;
-    private double REVERSE_PQ_PREFIX = -(BASE - 0.5 * GROWTH) / GROWTH;
-    private double REVERSE_CONST = REVERSE_PQ_PREFIX * REVERSE_PQ_PREFIX;
-    private double GROWTH_DIVIDES_2 = 2 / GROWTH;
+    private final double BASE = 10_000;
+    private final double GROWTH = 2_500;
 
     private double getLevel(double exp) {
+        double REVERSE_PQ_PREFIX = -(BASE - 0.5 * GROWTH) / GROWTH;
+        double REVERSE_CONST = REVERSE_PQ_PREFIX * REVERSE_PQ_PREFIX;
+        double GROWTH_DIVIDES_2 = 2 / GROWTH;
         return exp < 0 ? 1 : Math.floor(1 + REVERSE_PQ_PREFIX + Math.sqrt(REVERSE_CONST + GROWTH_DIVIDES_2 * exp));
     }
 
@@ -661,6 +660,7 @@ public class DuelsStatsCommand {
     }
 
     private double getTotalExpToFullLevel(double level) {
+        double HALF_GROWTH = 0.5 * GROWTH;
         return (HALF_GROWTH * (level - 2) + BASE) * (level - 1);
     }
 
