@@ -1,9 +1,15 @@
 package org.polyfrost.example.util;
 
 public class Duels {
-    private int Duelswins, Duelskills, Duelslosses, Duelsdeaths, Duelscws, Duelsbws;
-    private double Duelswlr, Duelskdr;
-    private String Level;
+    private final int Duelswins;
+    private final int Duelskills;
+    private final int Duelslosses;
+    private final int Duelsdeaths;
+    private final int Duelscws;
+    private final int Duelsbws;
+    private final double Duelswlr;
+    private final double Duelskdr;
+    private final String Level;
     public Duels(int Duelskills, int Duelsdeaths, int Duelswins, int Duelslosses, int Duelscws, int Duelsbws, double Duelswlr, double Duelskdr, String Level) {
         this.Duelskills = Duelskills;
         this.Duelsdeaths = Duelsdeaths;

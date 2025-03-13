@@ -1,8 +1,17 @@
 package org.polyfrost.example.util;
 
 public class Bedwars {
-    private int Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws;
-    private double Bedwarsfkdr, Bedwarswlr, Bedwarsbblr;
+    private final int Bedwarsstar;
+    private final int Bedwarsfk;
+    private final int Bedwarsbb;
+    private final int Bedwarsw;
+    private final int Bedwarsl;
+    private final int Bedwarsfd;
+    private final int Bedwarsbl;
+    private final int Bedwarsws;
+    private final double Bedwarsfkdr;
+    private final double Bedwarswlr;
+    private final double Bedwarsbblr;
 
     public Bedwars(int Bedwarsstar, int Bedwarsfk, int Bedwarsbb, int Bedwarsw, int Bedwarsl, int Bedwarsfd, int Bedwarsbl, int Bedwarsws, double Bedwarsfkdr, double Bedwarswlr,
                   double Bedwarsbblr) {
