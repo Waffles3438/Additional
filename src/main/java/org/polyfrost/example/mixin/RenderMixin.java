@@ -1,6 +1,5 @@
 package org.polyfrost.example.mixin;
 
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -11,33 +10,24 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import static org.lwjgl.opengl.GL11.*;
+
 @Mixin(value = Render.class)
 public class RenderMixin {
 
-    @Redirect(
-            method = "renderLivingLabel",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/GlStateManager;depthMask(Z)V"
-            )
-    )
-    private void disabledepth_and_depthmask(boolean flag){
-        if(ModConfig.nametagsThroughWalls && flag){
-            GlStateManager.disableDepth();
+    @Inject(method = "renderLivingLabel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlStateManager;disableDepth()V"))
+    private void enableOffsetFill(Entity entity, String str, double x, double y, double z, int maxDistance, CallbackInfo ci) {
+        if(ModConfig.nametagsThroughWalls && !isBot(entity)) {
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            glPolygonOffset(1.0f, -Float.MAX_VALUE);
         }
-        GlStateManager.depthMask(flag);
     }
 
-    @Inject(
-            method = "renderLivingLabel",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/GlStateManager;enableLighting()V"
-            )
-    )
-    private void enabledepth(Entity entityIn, String str, double x, double y, double z, int maxDistance, CallbackInfo ci){
-        if(ModConfig.nametagsThroughWalls){
-            GlStateManager.enableDepth();
+    @Inject(method = "renderLivingLabel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlStateManager;enableLighting()V"))
+    private void disableOffsetFill(Entity entity, String str, double x, double y, double z, int maxDistance, CallbackInfo ci) {
+        if(ModConfig.nametagsThroughWalls && !isBot(entity)) {
+            glPolygonOffset(0.0f, 0.0f);
+            glDisable(GL_POLYGON_OFFSET_FILL);
         }
     }
 
