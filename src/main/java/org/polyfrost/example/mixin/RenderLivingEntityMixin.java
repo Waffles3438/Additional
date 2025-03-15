@@ -36,6 +36,7 @@ public class RenderLivingEntityMixin {
             )
     )
     private boolean cancel(EntityLivingBase instance) {
+        if(isBot(instance)) return instance.isSneaking();
         return !ModConfig.nametagsOnShift && instance.isSneaking();
     }
 
