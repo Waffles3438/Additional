@@ -46,8 +46,13 @@ public class BedwarsStatsCommand {
                 uuid = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("id").getAsString();
                 Username = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("name").getAsString();
             } catch (Exception e) {
-                UChat.chat("Invalid player");
-                return;
+                if(Addition.properPlayerNames.containsKey(player.toLowerCase())) {
+                    Username = Addition.properPlayerNames.get(player.toLowerCase());
+                    request = false;
+                } else {
+                    UChat.chat("Invalid player");
+                    return;
+                }
             }
 
             connection = newConnection("https://api.hypixel.net/player?key=" + ModConfig.api + "&uuid=" + uuid);
@@ -97,7 +102,7 @@ public class BedwarsStatsCommand {
                     }
                     return;
                 }
-                requestStats();
+                requestStats(player);
             } else getStats(Username);
         });
     }
@@ -111,8 +116,13 @@ public class BedwarsStatsCommand {
                 uuid = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("id").getAsString();
                 Username = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("name").getAsString();
             } catch (Exception e) {
-                UChat.chat("Invalid player");
-                return;
+                if (Addition.properPlayerNames.containsKey(player.toLowerCase())){
+                    Username = Addition.properPlayerNames.get(player.toLowerCase());
+                    request = false;
+                } else {
+                    UChat.chat("Invalid player");
+                    return;
+                }
             }
 
             connection = newConnection("https://api.hypixel.net/player?key=" + ModConfig.api + "&uuid=" + uuid);
@@ -162,7 +172,7 @@ public class BedwarsStatsCommand {
                     }
                     return;
                 }
-                requestStats();
+                requestStats(player);
             } else getStats(Username);
         });
     }
@@ -203,7 +213,7 @@ public class BedwarsStatsCommand {
         UChat.chat("§9------------------------------------------");
     }
 
-    private void requestStats(){
+    private void requestStats(String player){
         try {
             profile = getStringAsJson(connection).getAsJsonObject("player");
             bw = profile.getAsJsonObject("stats").getAsJsonObject("Bedwars");
@@ -261,6 +271,7 @@ public class BedwarsStatsCommand {
         else Bedwarsbblr = Bedwarsbb;
         Bedwarsbblr = (double) Math.round(Bedwarsbblr * 100) / 100;
 
+        boolean added = false;
         if (Bedwarsl != 0 || Bedwarsw != 0) {
             UChat.chat("§9------------------------------------------");
             UChat.chat(getFormattedRank(Bedwarsstar) + " " + formatRank(profile, Username));
@@ -274,12 +285,16 @@ public class BedwarsStatsCommand {
             UChat.chat("§9------------------------------------------");
             Addition.bedwarsStatsList.remove(Username);
             Addition.bedwarsStatsList.put(Username, new Bedwars(Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws, Bedwarsfkdr, Bedwarswlr, Bedwarsbblr));
+            if(!Addition.properPlayerNames.containsKey(player.toLowerCase())) Addition.properPlayerNames.put(player.toLowerCase(), Username);
         } else {
             UChat.chat(Username + " has never played Bedwars");
         }
 
         if(Addition.duelsStatsList.containsKey(Username) && (Duelslosses != 0 || Duelswins != 0)) Addition.duelsStatsList.remove(Username);
-        if (Duelslosses != 0 || Duelswins != 0) Addition.duelsStatsList.put(Username, new Duels(Duelskills, Duelsdeaths, Duelswins, Duelslosses, Duelscws, Duelsbws, Duelswlr, Duelskdr, Level));
+        if (Duelslosses != 0 || Duelswins != 0) {
+            Addition.duelsStatsList.put(Username, new Duels(Duelskills, Duelsdeaths, Duelswins, Duelslosses, Duelscws, Duelsbws, Duelswlr, Duelskdr, Level));
+            if(!Addition.properPlayerNames.containsKey(player.toLowerCase())) Addition.properPlayerNames.put(player.toLowerCase(), Username);
+        }
         Addition.playerRanks.remove(Username);
         Addition.playerRanks.put(Username, new Ranks(rank, special, monthly, MVPPlusPlusCheck, plusColor, admin));
     }

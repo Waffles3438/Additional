@@ -102,7 +102,7 @@ public class DuelsStatsCommand {
                     }
                     return;
                 }
-                requestStats();
+                requestStats(player);
             } else getStats(Username);
         });
     }
@@ -174,7 +174,7 @@ public class DuelsStatsCommand {
                     }
                     return;
                 }
-                requestStats();
+                requestStats(player);
             } else getStats(Username);
         });
     }
@@ -215,7 +215,7 @@ public class DuelsStatsCommand {
         UChat.chat("§9------------------------------------------");
     }
 
-    private void requestStats(){
+    private void requestStats(String player){
         try {
             profile = getStringAsJson(connection).getAsJsonObject("player");
             d = profile.getAsJsonObject("stats").getAsJsonObject("Duels");
@@ -289,12 +289,16 @@ public class DuelsStatsCommand {
             UChat.chat("§9------------------------------------------");
             Addition.duelsStatsList.remove(Username);
             Addition.duelsStatsList.put(Username, new Duels(Duelskills, Duelsdeaths, Duelswins, Duelslosses, Duelscws, Duelsbws, Duelswlr, Duelskdr, Level));
+            if(!Addition.properPlayerNames.containsKey(player.toLowerCase())) Addition.properPlayerNames.put(player.toLowerCase(), Username);
         } else {
             UChat.chat(Username + " has never played Duels");
         }
 
         if(Addition.bedwarsStatsList.containsKey(Username) && (Bedwarsl != 0 || Bedwarsw != 0)) Addition.bedwarsStatsList.remove(Username);
-        if(Bedwarsl != 0 || Bedwarsw != 0) Addition.bedwarsStatsList.put(Username, new Bedwars(Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws, Bedwarsfkdr, Bedwarswlr, Bedwarsbblr));
+        if(Bedwarsl != 0 || Bedwarsw != 0) {
+            Addition.bedwarsStatsList.put(Username, new Bedwars(Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws, Bedwarsfkdr, Bedwarswlr, Bedwarsbblr));
+            if(!Addition.properPlayerNames.containsKey(player.toLowerCase())) Addition.properPlayerNames.put(player.toLowerCase(), Username);
+        }
         Addition.playerRanks.remove(Username);
         Addition.playerRanks.put(Username, new Ranks(rank, special, monthly, MVPPlusPlusCheck, plusColor, admin));
     }
