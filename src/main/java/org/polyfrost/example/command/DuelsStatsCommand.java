@@ -48,8 +48,13 @@ public class DuelsStatsCommand {
                 uuid = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("id").getAsString();
                 Username = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("name").getAsString();
             } catch (Exception e) {
-                UChat.chat("Invalid player");
-                return;
+                if(Addition.properPlayerNames.containsKey(player.toLowerCase())) {
+                    Username = Addition.properPlayerNames.get(player.toLowerCase());
+                    request = false;
+                } else {
+                    UChat.chat("Invalid player");
+                    return;
+                }
             }
 
             connection = newConnection("https://api.hypixel.net/player?key=" + ModConfig.api + "&uuid=" + uuid);
@@ -120,8 +125,13 @@ public class DuelsStatsCommand {
                 uuid = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("id").getAsString();
                 Username = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("name").getAsString();
             } catch (Exception e) {
-                UChat.chat("Invalid player");
-                return;
+                if (Addition.properPlayerNames.containsKey(player.toLowerCase())){
+                    Username = Addition.properPlayerNames.get(player.toLowerCase());
+                    request = false;
+                } else {
+                    UChat.chat("Invalid player");
+                    return;
+                }
             }
 
             connection = newConnection("https://api.hypixel.net/player?key=" + ModConfig.api + "&uuid=" + uuid);
@@ -179,6 +189,32 @@ public class DuelsStatsCommand {
         });
     }
 
+    private String formatColors(int stat, int god) {
+        if(stat >= god) return "§0" + stat;
+        else if(stat > god*0.88888888) return "§4" + stat;
+        else if(stat > god*0.77777777) return "§c" + stat;
+        else if(stat > god*0.66666666) return "§6" + stat;
+        else if(stat > god*0.55555555) return "§e" + stat;
+        else if(stat > god*0.44444444) return "§2" + stat;
+        else if(stat > god*0.33333333) return "§a" + stat;
+        else if(stat > god*0.22222222) return "§b" + stat;
+        else if(stat > god*0.11111111) return "§f" + stat;
+        else return "§7" + stat;
+    }
+
+    private String formatColors(double stat, int god) {
+        if(stat >= god) return "§0" + stat;
+        else if(stat > god*0.88888888) return "§4" + stat;
+        else if(stat > god*0.77777777) return "§c" + stat;
+        else if(stat > god*0.66666666) return "§6" + stat;
+        else if(stat > god*0.55555555) return "§e" + stat;
+        else if(stat > god*0.44444444) return "§2" + stat;
+        else if(stat > god*0.33333333) return "§a" + stat;
+        else if(stat > god*0.22222222) return "§b" + stat;
+        else if(stat > god*0.11111111) return "§f" + stat;
+        else return "§7" + stat;
+    }
+
     private void getStats(String Player) {
         if(!Addition.duelsStatsList.containsKey(Player)) {
             UChat.chat(Player + " is not cached");
@@ -204,10 +240,10 @@ public class DuelsStatsCommand {
         UChat.chat("§9------------------------------------------");
         UChat.chat(getPlayerDivision(Duelswins) + formatWithoutRequestRank(Username));
         UChat.chat("Level: " + Level);
-        UChat.chat("WLR: " + Duelswlr);
-        UChat.chat("Wins: " + Duelswins);
-        UChat.chat("KDR: " + Duelskdr);
-        UChat.chat("Kills: " + Duelskills);
+        UChat.chat("WLR: " + formatColors(Duelswlr, 10));
+        UChat.chat("Wins: " + formatColors(Duelswins, 30000));
+        UChat.chat("KDR: " + formatColors(Duelskdr, 10));
+        UChat.chat("Kills: " + formatColors(Duelskills, 30000));
         if(Duelscws != -1 && Duelsbws != -1) {
             UChat.chat("Current Winstreak: " + Duelscws);
             UChat.chat("Best Winstreak: " + Duelsbws);
@@ -278,10 +314,10 @@ public class DuelsStatsCommand {
             UChat.chat("§9------------------------------------------");
             UChat.chat(getPlayerDivision(Duelswins) + formatRank(profile, Username));
             UChat.chat("Level: " + Level);
-            UChat.chat("WLR: " + Duelswlr);
-            UChat.chat("Wins: " + Duelswins);
-            UChat.chat("KDR: " + Duelskdr);
-            UChat.chat("Kills: " + Duelskills);
+            UChat.chat("WLR: " + formatColors(Duelswlr, 10));
+            UChat.chat("Wins: " + formatColors(Duelswins, 30000));
+            UChat.chat("KDR: " + formatColors(Duelskdr, 10));
+            UChat.chat("Kills: " + formatColors(Duelskills, 30000));
             if(Duelscws != -1 && Duelsbws != -1) {
                 UChat.chat("Current Winstreak: " + Duelscws);
                 UChat.chat("Best Winstreak: " + Duelsbws);

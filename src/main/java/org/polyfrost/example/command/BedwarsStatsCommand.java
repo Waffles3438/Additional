@@ -177,6 +177,32 @@ public class BedwarsStatsCommand {
         });
     }
 
+    private String formatColors(int stat, int god) {
+        if(stat >= god) return "§0" + stat;
+        else if(stat > god*0.88888888) return "§4" + stat;
+        else if(stat > god*0.77777777) return "§c" + stat;
+        else if(stat > god*0.66666666) return "§6" + stat;
+        else if(stat > god*0.55555555) return "§e" + stat;
+        else if(stat > god*0.44444444) return "§2" + stat;
+        else if(stat > god*0.33333333) return "§a" + stat;
+        else if(stat > god*0.22222222) return "§b" + stat;
+        else if(stat > god*0.11111111) return "§f" + stat;
+        else return "§7" + stat;
+    }
+
+    private String formatColors(double stat, int god) {
+        if(stat >= god) return "§0" + stat;
+        else if(stat > god*0.88888888) return "§4" + stat;
+        else if(stat > god*0.77777777) return "§c" + stat;
+        else if(stat > god*0.66666666) return "§6" + stat;
+        else if(stat > god*0.55555555) return "§e" + stat;
+        else if(stat > god*0.44444444) return "§2" + stat;
+        else if(stat > god*0.33333333) return "§a" + stat;
+        else if(stat > god*0.22222222) return "§b" + stat;
+        else if(stat > god*0.11111111) return "§f" + stat;
+        else return "§7" + stat;
+    }
+
     private void getStats(String Player) {
         if (!Addition.bedwarsStatsList.containsKey(Player)) {
             UChat.chat(Player + " is not cached");
@@ -203,12 +229,12 @@ public class BedwarsStatsCommand {
         Bedwarsbblr = bedwarsStats.getBedwarsBBLR();
         UChat.chat("§9------------------------------------------");
         UChat.chat(getFormattedRank(Bedwarsstar) + " " + formatWithoutRequestRank(Username));
-        UChat.chat("FKDR: " + Bedwarsfkdr);
-        UChat.chat("Final kills: " + Bedwarsfk);
-        UChat.chat("WLR: " + Bedwarswlr);
-        UChat.chat("Wins: " + Bedwarsw);
-        UChat.chat("BBLR: " + Bedwarsbblr);
-        UChat.chat("Beds: " + Bedwarsbb);
+        UChat.chat("FKDR: " + formatColors(Bedwarsfkdr, 20));
+        UChat.chat("Final kills: " + formatColors(Bedwarsfk, 50000));
+        UChat.chat("WLR: " + formatColors(Bedwarswlr, 8));
+        UChat.chat("Wins: " + formatColors(Bedwarsw, 30000));
+        UChat.chat("BBLR: " + formatColors(Bedwarsbblr, 8));
+        UChat.chat("Beds: " + formatColors(Bedwarsbb, 40000));
         if(Bedwarsws != -1) UChat.chat("Winstreak: " + Bedwarsws);
         UChat.chat("§9------------------------------------------");
     }
@@ -275,12 +301,12 @@ public class BedwarsStatsCommand {
         if (Bedwarsl != 0 || Bedwarsw != 0) {
             UChat.chat("§9------------------------------------------");
             UChat.chat(getFormattedRank(Bedwarsstar) + " " + formatRank(profile, Username));
-            UChat.chat("FKDR: " + Bedwarsfkdr);
-            UChat.chat("Final kills: " + Bedwarsfk);
-            UChat.chat("WLR: " + Bedwarswlr);
-            UChat.chat("Wins: " + Bedwarsw);
-            UChat.chat("BBLR: " + Bedwarsbblr);
-            UChat.chat("Beds: " + Bedwarsbb);
+            UChat.chat("FKDR: " + formatColors(Bedwarsfkdr, 20));
+            UChat.chat("Final kills: " + formatColors(Bedwarsfk, 50000));
+            UChat.chat("WLR: " + formatColors(Bedwarswlr, 8));
+            UChat.chat("Wins: " + formatColors(Bedwarsw, 30000));
+            UChat.chat("BBLR: " + formatColors(Bedwarsbblr, 8));
+            UChat.chat("Beds: " + formatColors(Bedwarsbb, 40000));
             if(Bedwarsws != -1) UChat.chat("Winstreak: " + Bedwarsws);
             UChat.chat("§9------------------------------------------");
             Addition.bedwarsStatsList.remove(Username);
