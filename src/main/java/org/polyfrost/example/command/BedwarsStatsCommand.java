@@ -46,8 +46,13 @@ public class BedwarsStatsCommand {
                 uuid = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("id").getAsString();
                 Username = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("name").getAsString();
             } catch (Exception e) {
-                UChat.chat("Invalid player");
-                return;
+                if(Addition.properPlayerNames.containsKey(player.toLowerCase())) {
+                    Username = Addition.properPlayerNames.get(player.toLowerCase());
+                    request = false;
+                } else {
+                    UChat.chat("Invalid player");
+                    return;
+                }
             }
 
             connection = newConnection("https://api.hypixel.net/player?key=" + ModConfig.api + "&uuid=" + uuid);
@@ -97,7 +102,7 @@ public class BedwarsStatsCommand {
                     }
                     return;
                 }
-                requestStats();
+                requestStats(player);
             } else getStats(Username);
         });
     }
@@ -111,8 +116,13 @@ public class BedwarsStatsCommand {
                 uuid = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("id").getAsString();
                 Username = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("name").getAsString();
             } catch (Exception e) {
-                UChat.chat("Invalid player");
-                return;
+                if (Addition.properPlayerNames.containsKey(player.toLowerCase())){
+                    Username = Addition.properPlayerNames.get(player.toLowerCase());
+                    request = false;
+                } else {
+                    UChat.chat("Invalid player");
+                    return;
+                }
             }
 
             connection = newConnection("https://api.hypixel.net/player?key=" + ModConfig.api + "&uuid=" + uuid);
@@ -162,9 +172,35 @@ public class BedwarsStatsCommand {
                     }
                     return;
                 }
-                requestStats();
+                requestStats(player);
             } else getStats(Username);
         });
+    }
+
+    private String formatColors(int stat, int god) {
+        if(stat >= god) return "§0" + stat;
+        else if(stat > god*0.88888888) return "§4" + stat;
+        else if(stat > god*0.77777777) return "§c" + stat;
+        else if(stat > god*0.66666666) return "§6" + stat;
+        else if(stat > god*0.55555555) return "§e" + stat;
+        else if(stat > god*0.44444444) return "§2" + stat;
+        else if(stat > god*0.33333333) return "§a" + stat;
+        else if(stat > god*0.22222222) return "§b" + stat;
+        else if(stat > god*0.11111111) return "§f" + stat;
+        else return "§7" + stat;
+    }
+
+    private String formatColors(double stat, int god) {
+        if(stat >= god) return "§0" + stat;
+        else if(stat > god*0.88888888) return "§4" + stat;
+        else if(stat > god*0.77777777) return "§c" + stat;
+        else if(stat > god*0.66666666) return "§6" + stat;
+        else if(stat > god*0.55555555) return "§e" + stat;
+        else if(stat > god*0.44444444) return "§2" + stat;
+        else if(stat > god*0.33333333) return "§a" + stat;
+        else if(stat > god*0.22222222) return "§b" + stat;
+        else if(stat > god*0.11111111) return "§f" + stat;
+        else return "§7" + stat;
     }
 
     private void getStats(String Player) {
@@ -193,17 +229,17 @@ public class BedwarsStatsCommand {
         Bedwarsbblr = bedwarsStats.getBedwarsBBLR();
         UChat.chat("§9------------------------------------------");
         UChat.chat(getFormattedRank(Bedwarsstar) + " " + formatWithoutRequestRank(Username));
-        UChat.chat("FKDR: " + Bedwarsfkdr);
-        UChat.chat("Final kills: " + Bedwarsfk);
-        UChat.chat("WLR: " + Bedwarswlr);
-        UChat.chat("Wins: " + Bedwarsw);
-        UChat.chat("BBLR: " + Bedwarsbblr);
-        UChat.chat("Beds: " + Bedwarsbb);
+        UChat.chat("FKDR: " + formatColors(Bedwarsfkdr, 20));
+        UChat.chat("Final kills: " + formatColors(Bedwarsfk, 50000));
+        UChat.chat("WLR: " + formatColors(Bedwarswlr, 8));
+        UChat.chat("Wins: " + formatColors(Bedwarsw, 30000));
+        UChat.chat("BBLR: " + formatColors(Bedwarsbblr, 8));
+        UChat.chat("Beds: " + formatColors(Bedwarsbb, 40000));
         if(Bedwarsws != -1) UChat.chat("Winstreak: " + Bedwarsws);
         UChat.chat("§9------------------------------------------");
     }
 
-    private void requestStats(){
+    private void requestStats(String player){
         try {
             profile = getStringAsJson(connection).getAsJsonObject("player");
             bw = profile.getAsJsonObject("stats").getAsJsonObject("Bedwars");
@@ -261,25 +297,30 @@ public class BedwarsStatsCommand {
         else Bedwarsbblr = Bedwarsbb;
         Bedwarsbblr = (double) Math.round(Bedwarsbblr * 100) / 100;
 
+        boolean added = false;
         if (Bedwarsl != 0 || Bedwarsw != 0) {
             UChat.chat("§9------------------------------------------");
             UChat.chat(getFormattedRank(Bedwarsstar) + " " + formatRank(profile, Username));
-            UChat.chat("FKDR: " + Bedwarsfkdr);
-            UChat.chat("Final kills: " + Bedwarsfk);
-            UChat.chat("WLR: " + Bedwarswlr);
-            UChat.chat("Wins: " + Bedwarsw);
-            UChat.chat("BBLR: " + Bedwarsbblr);
-            UChat.chat("Beds: " + Bedwarsbb);
+            UChat.chat("FKDR: " + formatColors(Bedwarsfkdr, 20));
+            UChat.chat("Final kills: " + formatColors(Bedwarsfk, 50000));
+            UChat.chat("WLR: " + formatColors(Bedwarswlr, 8));
+            UChat.chat("Wins: " + formatColors(Bedwarsw, 30000));
+            UChat.chat("BBLR: " + formatColors(Bedwarsbblr, 8));
+            UChat.chat("Beds: " + formatColors(Bedwarsbb, 40000));
             if(Bedwarsws != -1) UChat.chat("Winstreak: " + Bedwarsws);
             UChat.chat("§9------------------------------------------");
             Addition.bedwarsStatsList.remove(Username);
             Addition.bedwarsStatsList.put(Username, new Bedwars(Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws, Bedwarsfkdr, Bedwarswlr, Bedwarsbblr));
+            if(!Addition.properPlayerNames.containsKey(player.toLowerCase())) Addition.properPlayerNames.put(player.toLowerCase(), Username);
         } else {
             UChat.chat(Username + " has never played Bedwars");
         }
 
         if(Addition.duelsStatsList.containsKey(Username) && (Duelslosses != 0 || Duelswins != 0)) Addition.duelsStatsList.remove(Username);
-        if (Duelslosses != 0 || Duelswins != 0) Addition.duelsStatsList.put(Username, new Duels(Duelskills, Duelsdeaths, Duelswins, Duelslosses, Duelscws, Duelsbws, Duelswlr, Duelskdr, Level));
+        if (Duelslosses != 0 || Duelswins != 0) {
+            Addition.duelsStatsList.put(Username, new Duels(Duelskills, Duelsdeaths, Duelswins, Duelslosses, Duelscws, Duelsbws, Duelswlr, Duelskdr, Level));
+            if(!Addition.properPlayerNames.containsKey(player.toLowerCase())) Addition.properPlayerNames.put(player.toLowerCase(), Username);
+        }
         Addition.playerRanks.remove(Username);
         Addition.playerRanks.put(Username, new Ranks(rank, special, monthly, MVPPlusPlusCheck, plusColor, admin));
     }
