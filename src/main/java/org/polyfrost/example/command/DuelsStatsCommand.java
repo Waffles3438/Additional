@@ -190,28 +190,28 @@ public class DuelsStatsCommand {
     }
 
     private String formatColors(int stat, int god) {
-        if(stat >= god) return "§0" + stat;
-        else if(stat > god*0.88888888) return "§4" + stat;
-        else if(stat > god*0.77777777) return "§c" + stat;
-        else if(stat > god*0.66666666) return "§6" + stat;
-        else if(stat > god*0.55555555) return "§e" + stat;
-        else if(stat > god*0.44444444) return "§2" + stat;
-        else if(stat > god*0.33333333) return "§a" + stat;
-        else if(stat > god*0.22222222) return "§b" + stat;
-        else if(stat > god*0.11111111) return "§f" + stat;
+        if(stat > god*2) return "§0" + stat;
+        else if(stat >= god) return "§4" + stat;
+        else if(stat > god*0.875) return "§c" + stat;
+        else if(stat > god*0.75) return "§6" + stat;
+        else if(stat > god*0.625) return "§e" + stat;
+        else if(stat > god*0.5) return "§2" + stat;
+        else if(stat > god*0.375) return "§a" + stat;
+        else if(stat > god*0.25) return "§b" + stat;
+        else if(stat > god*0.125) return "§f" + stat;
         else return "§7" + stat;
     }
 
     private String formatColors(double stat, int god) {
-        if(stat >= god) return "§0" + stat;
-        else if(stat > god*0.88888888) return "§4" + stat;
-        else if(stat > god*0.77777777) return "§c" + stat;
-        else if(stat > god*0.66666666) return "§6" + stat;
-        else if(stat > god*0.55555555) return "§e" + stat;
-        else if(stat > god*0.44444444) return "§2" + stat;
-        else if(stat > god*0.33333333) return "§a" + stat;
-        else if(stat > god*0.22222222) return "§b" + stat;
-        else if(stat > god*0.11111111) return "§f" + stat;
+        if(stat > god*2) return "§0" + stat;
+        else if(stat >= god) return "§4" + stat;
+        else if(stat > god*0.875) return "§c" + stat;
+        else if(stat > god*0.75) return "§6" + stat;
+        else if(stat > god*0.625) return "§e" + stat;
+        else if(stat > god*0.5) return "§2" + stat;
+        else if(stat > god*0.375) return "§a" + stat;
+        else if(stat > god*0.25) return "§b" + stat;
+        else if(stat > god*0.125) return "§f" + stat;
         else return "§7" + stat;
     }
 
@@ -241,9 +241,9 @@ public class DuelsStatsCommand {
         UChat.chat(getPlayerDivision(Duelswins) + formatWithoutRequestRank(Username));
         UChat.chat("Level: " + Level);
         UChat.chat("WLR: " + formatColors(Duelswlr, 10));
-        UChat.chat("Wins: " + formatColors(Duelswins, 30000));
+        UChat.chat("Wins: " + formatColors(Duelswins, 20000));
         UChat.chat("KDR: " + formatColors(Duelskdr, 10));
-        UChat.chat("Kills: " + formatColors(Duelskills, 30000));
+        UChat.chat("Kills: " + formatColors(Duelskills, 20000));
         if(Duelscws != -1 && Duelsbws != -1) {
             UChat.chat("Current Winstreak: " + Duelscws);
             UChat.chat("Best Winstreak: " + Duelsbws);
