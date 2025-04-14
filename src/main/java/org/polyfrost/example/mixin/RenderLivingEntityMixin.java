@@ -1,5 +1,6 @@
 package org.polyfrost.example.mixin;
 
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RendererLivingEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -8,11 +9,41 @@ import net.minecraft.scoreboard.Team;
 import org.polyfrost.example.config.ModConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = RendererLivingEntity.class)
 public class RenderLivingEntityMixin {
+
+    @Inject(
+            method = "renderName(Lnet/minecraft/entity/EntityLivingBase;DDD)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/entity/RendererLivingEntity;renderOffsetLivingLabel(Lnet/minecraft/entity/Entity;DDDLjava/lang/String;FD)V")
+    )
+    private void shiftNameTagsWhileSneakingHead(EntityLivingBase entity, double x, double y, double z, CallbackInfo ci) {
+        if(!(entity instanceof EntityPlayer)) return;
+        if(entity.isSneaking()) {
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0F, -0.25F, 0.0F);
+        }
+    }
+
+    @Inject(
+            method = "renderName(Lnet/minecraft/entity/EntityLivingBase;DDD)V",
+            at = @At(
+                    value = "INVOKE",
+                    shift = At.Shift.AFTER,
+                    target = "Lnet/minecraft/client/renderer/entity/RendererLivingEntity;renderOffsetLivingLabel(Lnet/minecraft/entity/Entity;DDDLjava/lang/String;FD)V")
+    )
+    private void shiftNameTagsWhileSneakingTail(EntityLivingBase entity, double x, double y, double z, CallbackInfo ci) {
+        if(!(entity instanceof EntityPlayer)) return;
+        if(entity.isSneaking()) {
+            GlStateManager.popMatrix();
+        }
+    }
     
     @Redirect(
             method = "canRenderName(Lnet/minecraft/entity/EntityLivingBase;)Z",
