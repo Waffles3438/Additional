@@ -364,14 +364,8 @@ public class DuelsStatsCommand {
             Player = "§d[INNIT] " + Username;
         } else if (special.equals("YOUTUBER")) {
             Player = "§c[§fYOUTUBE§c] " + Username;
-        } else if (special.equals("ADMIN")) {
-            if(admin != null && admin.equals("§c[OWNER]")) {
-                Player = "§c[OWNER] " + Username;
-            } else {
-                Player = "§c[ADMIN] " + Username;
-            }
-        } else if (special.equals("GAME_MASTER")) {
-            Player = "§2[GM] " + Username;
+        } else if (special.equals("STAFF")) {
+            Player = "[ዞ] " + Username;
         } else if (monthly != null && MVPPlusPlusCheck != null && rank.equals("MVP_PLUS") && monthly.equals("GOLD") && MVPPlusPlusCheck.equals("SUPERSTAR")) { // Gold MVP++ check
             String color = "§c";
             if (plusColor != null) {
@@ -509,15 +503,8 @@ public class DuelsStatsCommand {
             Player = "§d[INNIT] " + Username;
         } else if (special.equals("YOUTUBER")) {
             Player = "§c[§fYOUTUBE§c] " + Username;
-        } else if (special.equals("ADMIN")) {
-
-            if(admin != null && admin.equals("§c[OWNER]")) {
-                Player = "§c[OWNER] " + Username;
-            } else {
-                Player = "§c[ADMIN] " + Username;
-            }
-        } else if (special.equals("GAME_MASTER")) {
-            Player = "§2[GM] " + Username;
+        } else if (special.equals("STAFF")) {
+            Player = "[ዞ] " + Username;
         } else if (monthly != null && MVPPlusPlusCheck != null && rank.equals("MVP_PLUS") && monthly.equals("GOLD") && MVPPlusPlusCheck.equals("SUPERSTAR")) { // Gold MVP++ check
             plusColor = getString(profile, "rankPlusColor");
             String color = "§c";
