@@ -365,7 +365,7 @@ public class DuelsStatsCommand {
         } else if (special.equals("YOUTUBER")) {
             Player = "§c[§fYOUTUBE§c] " + Username;
         } else if (special.equals("STAFF")) {
-            Player = "[ዞ] " + Username;
+            Player = "§c[§6ዞ§c] " + Username;
         } else if (monthly != null && MVPPlusPlusCheck != null && rank.equals("MVP_PLUS") && monthly.equals("GOLD") && MVPPlusPlusCheck.equals("SUPERSTAR")) { // Gold MVP++ check
             String color = "§c";
             if (plusColor != null) {
@@ -504,7 +504,7 @@ public class DuelsStatsCommand {
         } else if (special.equals("YOUTUBER")) {
             Player = "§c[§fYOUTUBE§c] " + Username;
         } else if (special.equals("STAFF")) {
-            Player = "[ዞ] " + Username;
+            Player = "§c[§6ዞ§c] " + Username;
         } else if (monthly != null && MVPPlusPlusCheck != null && rank.equals("MVP_PLUS") && monthly.equals("GOLD") && MVPPlusPlusCheck.equals("SUPERSTAR")) { // Gold MVP++ check
             plusColor = getString(profile, "rankPlusColor");
             String color = "§c";
