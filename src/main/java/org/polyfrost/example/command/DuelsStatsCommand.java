@@ -8,6 +8,7 @@ import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
 import org.polyfrost.example.Addition;
 import org.polyfrost.example.config.ModConfig;
@@ -41,21 +42,11 @@ public class DuelsStatsCommand {
     @Main
     private void main() {
         String player = Minecraft.getMinecraft().getSession().getProfile().getName();
+        Username = Minecraft.getMinecraft().getSession().getProfile().getName();
+        uuid = Minecraft.getMinecraft().getSession().getProfile().getId().toString();
 
         Multithreading.runAsync(() -> {
             boolean request = true;
-            try {
-                uuid = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("id").getAsString();
-                Username = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("name").getAsString();
-            } catch (Exception e) {
-                if(Addition.properPlayerNames.containsKey(player.toLowerCase())) {
-                    Username = Addition.properPlayerNames.get(player.toLowerCase());
-                    request = false;
-                } else {
-                    UChat.chat("Invalid player");
-                    return;
-                }
-            }
 
             connection = newConnection("https://api.hypixel.net/player?key=" + ModConfig.api + "&uuid=" + uuid);
             if (connection.isEmpty()) {
@@ -113,17 +104,14 @@ public class DuelsStatsCommand {
     }
 
     @Main
-    private void main(@Greedy String player) {
-        if(player.isEmpty()) {
-            UChat.chat("Enter a username");
-            return;
-        }
-
+    private void main(GameProfile player1) {
+        String player = player1.getName();
         Multithreading.runAsync(() -> {
             boolean request = true;
             try {
-                uuid = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("id").getAsString();
-                Username = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject().get("name").getAsString();
+                JsonObject minecraft = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject();
+                uuid = minecraft.get("id").getAsString();
+                Username = minecraft.get("name").getAsString();
             } catch (Exception e) {
                 if (Addition.properPlayerNames.containsKey(player.toLowerCase())){
                     Username = Addition.properPlayerNames.get(player.toLowerCase());
@@ -364,14 +352,8 @@ public class DuelsStatsCommand {
             Player = "§d[INNIT] " + Username;
         } else if (special.equals("YOUTUBER")) {
             Player = "§c[§fYOUTUBE§c] " + Username;
-        } else if (special.equals("ADMIN")) {
-            if(admin != null && admin.equals("§c[OWNER]")) {
-                Player = "§c[OWNER] " + Username;
-            } else {
-                Player = "§c[ADMIN] " + Username;
-            }
-        } else if (special.equals("GAME_MASTER")) {
-            Player = "§2[GM] " + Username;
+        } else if (special.equals("STAFF")) {
+            Player = "§c[§6ዞ§c] " + Username;
         } else if (monthly != null && MVPPlusPlusCheck != null && rank.equals("MVP_PLUS") && monthly.equals("GOLD") && MVPPlusPlusCheck.equals("SUPERSTAR")) { // Gold MVP++ check
             String color = "§c";
             if (plusColor != null) {
@@ -509,15 +491,8 @@ public class DuelsStatsCommand {
             Player = "§d[INNIT] " + Username;
         } else if (special.equals("YOUTUBER")) {
             Player = "§c[§fYOUTUBE§c] " + Username;
-        } else if (special.equals("ADMIN")) {
-
-            if(admin != null && admin.equals("§c[OWNER]")) {
-                Player = "§c[OWNER] " + Username;
-            } else {
-                Player = "§c[ADMIN] " + Username;
-            }
-        } else if (special.equals("GAME_MASTER")) {
-            Player = "§2[GM] " + Username;
+        } else if (special.equals("STAFF")) {
+            Player = "§c[§6ዞ§c] " + Username;
         } else if (monthly != null && MVPPlusPlusCheck != null && rank.equals("MVP_PLUS") && monthly.equals("GOLD") && MVPPlusPlusCheck.equals("SUPERSTAR")) { // Gold MVP++ check
             plusColor = getString(profile, "rankPlusColor");
             String color = "§c";

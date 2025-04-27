@@ -102,7 +102,6 @@ public class RenderLivingEntityMixin {
                 entity instanceof EntityPlayer &&
                         (entity.getName().contains("[NPC]")
                                 || entity.getName().contains("[BOT]")
-                                || entity.getName().contains("iAT3")
                                 || entity.getName() == null
                                 || entity.getName().contains("npc-")
                                 || (entity.getName().contains("§") && (entity.getName().contains("SHOP") || entity.getName().contains("UPGRADE"))))
