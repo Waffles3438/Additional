@@ -4,9 +4,7 @@ import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.Multithreading;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
@@ -198,7 +196,7 @@ public class BedwarsStatsCommand {
 
     private void getStats(String Player) {
         if (!Addition.bedwarsStatsList.containsKey(Player)) {
-            UChat.chat(Player + " is not cached");
+            UChat.chat(Player + " has never played Bedwars");
             return;
         }
         Ranks rankStuff = Addition.playerRanks.get(Player);

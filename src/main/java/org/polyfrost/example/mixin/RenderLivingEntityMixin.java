@@ -6,6 +6,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.scoreboard.Team;
+import net.minecraftforge.fml.common.Mod;
 import org.polyfrost.example.config.ModConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -53,7 +54,7 @@ public class RenderLivingEntityMixin {
             )
     )
     private Team showInvis(EntityLivingBase instance) {
-        if(ModConfig.invisNametags && !isBot(instance)) {
+        if(ModConfig.invisNametags && !isBot(instance) && ModConfig.masterSwitch) {
             return null;
         }
         return instance.getTeam();
@@ -68,7 +69,7 @@ public class RenderLivingEntityMixin {
     )
     private boolean cancel(EntityLivingBase instance) {
         if(isBot(instance)) return instance.isSneaking();
-        return !ModConfig.nametagsOnShift && instance.isSneaking();
+        return !(ModConfig.nametagsOnShift && ModConfig.masterSwitch) && instance.isSneaking();
     }
 
     @Redirect(
@@ -79,7 +80,7 @@ public class RenderLivingEntityMixin {
             )
     )
     private boolean showInvisible(EntityLivingBase instance, EntityPlayer entityPlayer) {
-        if(ModConfig.invisNametags && instance.isInvisible() && !isBot(instance)) {
+        if(ModConfig.invisNametags && ModConfig.masterSwitch && instance.isInvisible() && !isBot(instance)) {
             return false;
         }
         return !entityPlayer.isSpectator() && instance.isInvisible();
@@ -91,7 +92,7 @@ public class RenderLivingEntityMixin {
             ordinal = 0
     )
     public float extendNametagRange(float range) {
-        if (ModConfig.extendNametagRange) {
+        if (ModConfig.extendNametagRange && ModConfig.masterSwitch) {
             return 256F;
         }
         return range;

@@ -4,7 +4,6 @@ import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.Multithreading;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -205,7 +204,7 @@ public class DuelsStatsCommand {
 
     private void getStats(String Player) {
         if(!Addition.duelsStatsList.containsKey(Player)) {
-            UChat.chat(Player + " is not cached");
+            UChat.chat(Player + " has never played Duels");
             return;
         }
         Ranks rankStuff = Addition.playerRanks.get(Player);
