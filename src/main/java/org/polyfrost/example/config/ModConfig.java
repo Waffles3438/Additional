@@ -1,6 +1,8 @@
 package org.polyfrost.example.config;
 
 import cc.polyfrost.oneconfig.config.annotations.*;
+import cc.polyfrost.oneconfig.config.core.OneKeyBind;
+import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.utils.Notifications;
 import org.polyfrost.example.Addition;
 import cc.polyfrost.oneconfig.config.Config;
@@ -9,6 +11,8 @@ import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.config.data.OptionSize;
 
 public class ModConfig extends Config {
+    public static boolean masterSwitch = false;
+
     @Switch(
             name = "No jump delay",
             size = OptionSize.DUAL,
@@ -26,13 +30,12 @@ public class ModConfig extends Config {
     )
     public static int jumpTicks = 3;
 
-    @Switch(
-            name = "Master Switch",
+    @KeyBind(
+            name = "Toggle Nametag Features",
             category = "Quality of Life",
-            subcategory = "Nametags",
-            size = OptionSize.DUAL
+            subcategory = "Nametags"
     )
-    public static boolean masterSwitch = false;
+    public static OneKeyBind nametagsKeybind = new OneKeyBind(UKeyboard.KEY_C);
 
     @Checkbox(
             name = "Show nametags on shift",
@@ -79,7 +82,7 @@ public class ModConfig extends Config {
         Addition.duelsStatsList.clear();
         Addition.playerRanks.clear();
         Addition.properPlayerNames.clear();
-        Notifications.INSTANCE.send("Addition", "Cleared player cache", 1000);
+        Notifications.INSTANCE.send("Addition", "Cleared player cache", 3000);
     };
 
     public ModConfig() {
@@ -90,6 +93,15 @@ public class ModConfig extends Config {
         addDependency("invisNametags", "masterSwitch");
         addDependency("extendNametagRange", "masterSwitch");
         addDependency("nametagsThroughWalls", "masterSwitch");
+        registerKeyBind(nametagsKeybind, () -> {
+            if(masterSwitch) {
+                masterSwitch = false;
+                Notifications.INSTANCE.send("Addition", "Disabled nametag addtions", 3000);
+            } else {
+                masterSwitch = true;
+                Notifications.INSTANCE.send("Addition", "Enabled nametag addtions", 3000);
+            }
+        });
     }
 }
 
