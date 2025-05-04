@@ -33,7 +33,8 @@ public class ModConfig extends Config {
     @KeyBind(
             name = "Toggle Nametag Features",
             category = "Quality of Life",
-            subcategory = "Nametags"
+            subcategory = "Nametags",
+            size = OptionSize.DUAL
     )
     public static OneKeyBind nametagsKeybind = new OneKeyBind(UKeyboard.KEY_C);
 
