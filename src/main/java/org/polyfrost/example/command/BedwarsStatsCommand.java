@@ -99,8 +99,8 @@ public class BedwarsStatsCommand {
 
     @Main
     private void main(GameProfile player1) {
-        String player = player1.getName();
         Multithreading.runAsync(() -> {
+            String player = player1.getName();
             boolean request = true;
             try {
                 JsonObject minecraft = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject();
