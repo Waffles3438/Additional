@@ -4,7 +4,6 @@ import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.Multithreading;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -41,14 +40,13 @@ public class DuelsStatsCommand {
 
     @Main
     private void main() {
-        String player = Minecraft.getMinecraft().getSession().getProfile().getName();
         Username = Minecraft.getMinecraft().getSession().getProfile().getName();
         uuid = Minecraft.getMinecraft().getSession().getProfile().getId().toString();
 
         Multithreading.runAsync(() -> {
             boolean request = true;
 
-            connection = newConnection("https://api.hypixel.net/player?key=" + ModConfig.api + "&uuid=" + uuid);
+            connection = newConnection("https://api.hypixel.net/v2/player?key=" + ModConfig.api + "&uuid=" + uuid);
             if (connection.isEmpty()) {
                 request = false;
             }
@@ -67,6 +65,7 @@ public class DuelsStatsCommand {
                 } catch (NullPointerException er) {
                     // never played duels or joined lobby
                     UChat.chat(Username + " has never played Duels");
+                    Addition.duelsStatsList.put(Username, new Duels(-1, -1, -1, -1, -1, -1, -1, -1, Level));
                     try {
                         profile = getStringAsJson(connection).getAsJsonObject("player");
                         bw = profile.getAsJsonObject("stats").getAsJsonObject("Bedwars");
@@ -95,18 +94,19 @@ public class DuelsStatsCommand {
                         if(Bedwarsw != 0 && Bedwarsl != 0) Addition.bedwarsStatsList.put(Username, new Bedwars(Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws, Bedwarsfkdr, Bedwarswlr, Bedwarsbblr));
                     } catch (NullPointerException err) {
                         // never played bedwars
+                        Addition.bedwarsStatsList.put(Username, new Bedwars(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
                     }
                     return;
                 }
-                requestStats(player);
+                requestStats(Username);
             } else getStats(Username);
         });
     }
 
     @Main
     private void main(GameProfile player1) {
-        String player = player1.getName();
         Multithreading.runAsync(() -> {
+            String player = player1.getName();
             boolean request = true;
             try {
                 JsonObject minecraft = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject();
@@ -122,7 +122,7 @@ public class DuelsStatsCommand {
                 }
             }
 
-            connection = newConnection("https://api.hypixel.net/player?key=" + ModConfig.api + "&uuid=" + uuid);
+            connection = newConnection("https://api.hypixel.net/v2/player?key=" + ModConfig.api + "&uuid=" + uuid);
             if (connection.isEmpty()) {
                 request = false;
             }
@@ -141,6 +141,7 @@ public class DuelsStatsCommand {
                 } catch (NullPointerException er) {
                     // never played duels or joined lobby
                     UChat.chat(Username + " has never played Duels");
+                    Addition.duelsStatsList.put(Username, new Duels(-1, -1, -1, -1, -1, -1, -1, -1, Level));
                     try {
                         profile = getStringAsJson(connection).getAsJsonObject("player");
                         bw = profile.getAsJsonObject("stats").getAsJsonObject("Bedwars");
@@ -169,6 +170,7 @@ public class DuelsStatsCommand {
                         if(Bedwarsw != 0 && Bedwarsl != 0) Addition.bedwarsStatsList.put(Username, new Bedwars(Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws, Bedwarsfkdr, Bedwarswlr, Bedwarsbblr));
                     } catch (NullPointerException err) {
                         // never played bedwars
+                        Addition.bedwarsStatsList.put(Username, new Bedwars(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
                     }
                     return;
                 }
@@ -205,7 +207,10 @@ public class DuelsStatsCommand {
 
     private void getStats(String Player) {
         if(!Addition.duelsStatsList.containsKey(Player)) {
-            UChat.chat(Player + " is not cached");
+            UChat.chat(Player + " is on API cooldown");
+            return;
+        } else if(Addition.duelsStatsList.get(Player).getDuelsWins() == -1) {
+            UChat.chat(Player + " has never played Duels");
             return;
         }
         Ranks rankStuff = Addition.playerRanks.get(Player);
@@ -226,7 +231,7 @@ public class DuelsStatsCommand {
         Duelswlr = duelsStats.getDuelsWLR();
         Level = duelsStats.getLevel();
         UChat.chat("§9------------------------------------------");
-        UChat.chat(getPlayerDivision(Duelswins) + formatWithoutRequestRank(Username));
+        UChat.chat(getPlayerDivision(Duelswins) + formatWithoutRequestRank(Player));
         UChat.chat("Level: " + Level);
         UChat.chat("WLR: " + formatColors(Duelswlr, 10));
         UChat.chat("Wins: " + formatColors(Duelswins, 20000));
@@ -247,6 +252,7 @@ public class DuelsStatsCommand {
         } catch (NullPointerException er) {
             // never played bedwars or joined lobby
             UChat.chat(Username + " has never played Duels");
+            Addition.duelsStatsList.put(Username, new Duels(-1, -1, -1, -1, -1, -1, -1, -1, Level));
             return;
         }
 
@@ -315,14 +321,19 @@ public class DuelsStatsCommand {
             Addition.duelsStatsList.put(Username, new Duels(Duelskills, Duelsdeaths, Duelswins, Duelslosses, Duelscws, Duelsbws, Duelswlr, Duelskdr, Level));
             if(!Addition.properPlayerNames.containsKey(player.toLowerCase())) Addition.properPlayerNames.put(player.toLowerCase(), Username);
         } else {
+            formatRank(profile, Username);
+            Addition.duelsStatsList.remove(Username);
+            Addition.duelsStatsList.put(Username, new Duels(-1, -1, -1, -1, -1, -1, -1, -1, Level));
             UChat.chat(Username + " has never played Duels");
         }
 
-        if(Addition.bedwarsStatsList.containsKey(Username) && (Bedwarsl != 0 || Bedwarsw != 0)) Addition.bedwarsStatsList.remove(Username);
+        Addition.bedwarsStatsList.remove(Username);
         if(Bedwarsl != 0 || Bedwarsw != 0) {
             Addition.bedwarsStatsList.put(Username, new Bedwars(Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws, Bedwarsfkdr, Bedwarswlr, Bedwarsbblr));
-            if(!Addition.properPlayerNames.containsKey(player.toLowerCase())) Addition.properPlayerNames.put(player.toLowerCase(), Username);
+        } else {
+            Addition.bedwarsStatsList.put(Username, new Bedwars(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
         }
+        if(!Addition.properPlayerNames.containsKey(player.toLowerCase())) Addition.properPlayerNames.put(player.toLowerCase(), Username);
         Addition.playerRanks.remove(Username);
         Addition.playerRanks.put(Username, new Ranks(rank, special, monthly, MVPPlusPlusCheck, plusColor, admin));
     }

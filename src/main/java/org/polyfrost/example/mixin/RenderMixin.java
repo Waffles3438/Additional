@@ -17,7 +17,7 @@ public class RenderMixin {
 
     @Inject(method = "renderLivingLabel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlStateManager;disableDepth()V"))
     private void enableOffsetFill(Entity entity, String str, double x, double y, double z, int maxDistance, CallbackInfo ci) {
-        if(ModConfig.nametagsThroughWalls && !isBot(entity)) {
+        if(ModConfig.nametagsThroughWalls && !isBot(entity) && ModConfig.masterSwitch) {
             glEnable(GL_POLYGON_OFFSET_FILL);
             glPolygonOffset(1.0f, -Float.MAX_VALUE);
         }
@@ -25,7 +25,7 @@ public class RenderMixin {
 
     @Inject(method = "renderLivingLabel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlStateManager;enableLighting()V"))
     private void disableOffsetFill(Entity entity, String str, double x, double y, double z, int maxDistance, CallbackInfo ci) {
-        if(ModConfig.nametagsThroughWalls && !isBot(entity)) {
+        if(ModConfig.nametagsThroughWalls && !isBot(entity) && ModConfig.masterSwitch) {
             glPolygonOffset(0.0f, 0.0f);
             glDisable(GL_POLYGON_OFFSET_FILL);
         }
@@ -39,7 +39,7 @@ public class RenderMixin {
             )
     )
     private double extendNametagRange(Entity entityIn, Entity instance) {
-        if(ModConfig.extendNametagRange && !isBot(entityIn)) {
+        if(ModConfig.extendNametagRange && !isBot(entityIn) && ModConfig.masterSwitch) {
             return 0.0D;
         }
         return entityIn.getDistanceSqToEntity(instance);
