@@ -95,13 +95,8 @@ public class ModConfig extends Config {
         addDependency("extendNametagRange", "masterSwitch");
         addDependency("nametagsThroughWalls", "masterSwitch");
         registerKeyBind(nametagsKeybind, () -> {
-            if(masterSwitch) {
-                masterSwitch = false;
-                Notifications.INSTANCE.send("Addition", "Disabled nametag addtions", 3000);
-            } else {
-                masterSwitch = true;
-                Notifications.INSTANCE.send("Addition", "Enabled nametag addtions", 3000);
-            }
+            Notifications.INSTANCE.send("Addition", (masterSwitch ? "Disabled" : "Enabled") + " nametag additions", 3000);
+            masterSwitch = !masterSwitch;
         });
     }
 }
