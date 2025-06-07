@@ -253,6 +253,7 @@ public class DuelsStatsCommand {
         } catch (NullPointerException er) {
             // never played bedwars or joined lobby
             UChat.chat(Username + " has never played Duels");
+            Addition.duelsStatsList.put(Username, new Duels(-1, -1, -1, -1, -1, -1, -1, -1, Level));
             return;
         }
 
@@ -335,8 +336,6 @@ public class DuelsStatsCommand {
         }
         if(!Addition.properPlayerNames.containsKey(player.toLowerCase())) Addition.properPlayerNames.put(player.toLowerCase(), Username);
         Addition.playerRanks.remove(Username);
-
-        UChat.chat(rank + " 337");
         Addition.playerRanks.put(Username, new Ranks(rank, special, monthly, MVPPlusPlusCheck, plusColor, admin));
     }
 
@@ -486,7 +485,6 @@ public class DuelsStatsCommand {
         if(admin != null && admin.equals("§6[MOJANG]")) return "§6[MOJANG] " + Username;
         if(getString(profile, "newPackageRank") != null) {
             rank = getString(profile, "newPackageRank");
-            UChat.chat(rank + " 487");
         } else {
             rank = "non";
         }

@@ -163,7 +163,7 @@ public class BedwarsStatsCommand {
                         if(Duelswins != 0 && Duelslosses != 0) Addition.duelsStatsList.put(Username, new Duels(Duelskills, Duelsdeaths, Duelswins, Duelslosses, Duelscws, Duelsbws, Duelswlr, Duelskdr, Level));
                     } catch (NullPointerException err) {
                         // never played duels or joined lobby
-                        if(Duelswins == 0 && Duelslosses == 0) Addition.duelsStatsList.put(Username, new Duels(-1, -1, -1, -1, -1, -1, -1, -1, Level));
+                        Addition.duelsStatsList.put(Username, new Duels(-1, -1, -1, -1, -1, -1, -1, -1, Level));
                     }
                     return;
                 }
@@ -218,6 +218,7 @@ public class BedwarsStatsCommand {
         } catch (NullPointerException er) {
             // never played bedwars or joined lobby
             UChat.chat("Player has never played bedwars");
+            Addition.bedwarsStatsList.put(Username, new Bedwars(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
             return;
         }
 
