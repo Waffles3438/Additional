@@ -215,7 +215,6 @@ public class DuelsStatsCommand {
         }
         Ranks rankStuff = Addition.playerRanks.get(Player);
         rank = rankStuff.getRank();
-        UChat.chat(rank + " 217");
         special = rankStuff.getSpecial();
         monthly = rankStuff.getMonthly();
         MVPPlusPlusCheck = rankStuff.getMVPPlusPlusCheck();
