@@ -402,7 +402,7 @@ public class DuelsStatsCommand {
                     case "DARK_PURPLE":
                         color = "§5";
                         break;
-                    case "GRAY":
+                    case "DARK_GRAY":
                         color = "§7";
                         break;
                     case "BLACK":
@@ -451,7 +451,7 @@ public class DuelsStatsCommand {
                     case "DARK_PURPLE":
                         color = "§5";
                         break;
-                    case "GRAY":
+                    case "DARK_GRAY":
                         color = "§7";
                         break;
                     case "BLACK":
