@@ -403,7 +403,7 @@ public class DuelsStatsCommand {
                         color = "§5";
                         break;
                     case "DARK_GRAY":
-                        color = "§7";
+                        color = "§8";
                         break;
                     case "BLACK":
                         color = "§0";
@@ -452,7 +452,7 @@ public class DuelsStatsCommand {
                         color = "§5";
                         break;
                     case "DARK_GRAY":
-                        color = "§7";
+                        color = "§8";
                         break;
                     case "BLACK":
                         color = "§0";
@@ -542,8 +542,8 @@ public class DuelsStatsCommand {
                     case "DARK_PURPLE":
                         color = "§5";
                         break;
-                    case "GRAY":
-                        color = "§7";
+                    case "DARK_GRAY":
+                        color = "§8";
                         break;
                     case "BLACK":
                         color = "§0";
@@ -592,8 +592,8 @@ public class DuelsStatsCommand {
                     case "DARK_PURPLE":
                         color = "§5";
                         break;
-                    case "GRAY":
-                        color = "§7";
+                    case "DARK_GRAY":
+                        color = "§8";
                         break;
                     case "BLACK":
                         color = "§0";
