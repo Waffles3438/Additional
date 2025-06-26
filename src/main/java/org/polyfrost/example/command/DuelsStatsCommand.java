@@ -109,7 +109,7 @@ public class DuelsStatsCommand {
             String player = player1.getName();
             boolean request = true;
             try {
-                JsonObject minecraft = NetworkUtils.getJsonElement("https://api.mojang.com/users/profiles/minecraft/" + player).getAsJsonObject();
+                JsonObject minecraft = NetworkUtils.getJsonElement("https://api.minecraftservices.com/minecraft/profile/lookup/name/" + player).getAsJsonObject();
                 uuid = minecraft.get("id").getAsString();
                 Username = minecraft.get("name").getAsString();
             } catch (Exception e) {
