@@ -322,7 +322,7 @@ public class BedwarsStatsCommand {
             Player = "§c[§fYOUTUBE§c] " + Username;
         } else if (special.equals("STAFF")) {
             Player = "§c[§6ዞ§c] " + Username;
-        } else if (monthly != null && MVPPlusPlusCheck != null && rank.equals("MVP_PLUS") && monthly.equals("GOLD") && MVPPlusPlusCheck.equals("SUPERSTAR")) { // Gold MVP++ check
+        } else if (MVPPlusPlusCheck != null && rank.equals("MVP_PLUS") && MVPPlusPlusCheck.equals("SUPERSTAR") && (monthly == null || monthly.equals("GOLD"))) { // Gold MVP++ check
             String color = "§c";
             if (plusColor != null) {
                 switch (plusColor) {
@@ -330,6 +330,7 @@ public class BedwarsStatsCommand {
                         color = "§c";
                         break;
                     case "GOLD":
+                        color = "§6";
                         color = "§6";
                         break;
                     case "GREEN":
@@ -461,7 +462,7 @@ public class BedwarsStatsCommand {
             Player = "§c[§fYOUTUBE§c] " + Username;
         } else if (special.equals("STAFF")) {
             Player = "§c[§6ዞ§c] " + Username;
-        } else if (monthly != null && MVPPlusPlusCheck != null && rank.equals("MVP_PLUS") && monthly.equals("GOLD") && MVPPlusPlusCheck.equals("SUPERSTAR")) { // Gold MVP++ check
+        } else if (MVPPlusPlusCheck != null && rank.equals("MVP_PLUS") && MVPPlusPlusCheck.equals("SUPERSTAR") && (monthly == null || monthly.equals("GOLD"))) { // Gold MVP++ check
             plusColor = getString(profile, "rankPlusColor");
             String color = "§c";
             if (plusColor != null) {
