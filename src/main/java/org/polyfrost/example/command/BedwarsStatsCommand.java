@@ -331,7 +331,6 @@ public class BedwarsStatsCommand {
                         break;
                     case "GOLD":
                         color = "§6";
-                        color = "§6";
                         break;
                     case "GREEN":
                         color = "§a";
@@ -752,8 +751,7 @@ public class BedwarsStatsCommand {
         else if (number < 4800) return Rank.FOURSEVEN;
         else if (number < 4900) return Rank.FOUREIGHT;
         else if (number < 5000) return Rank.FOURNINE;
-        else if (number < 5100) return Rank.FIVEZERO;
-        return Rank.RAINBOW;
+        else return Rank.FIVEZERO;
     }
 
     private final double BASE = 10_000;
