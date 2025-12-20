@@ -1,4 +1,4 @@
-package org.polyfrost.example.util;
+package me.waffles.addition.util;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

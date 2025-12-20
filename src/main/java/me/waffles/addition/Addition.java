@@ -1,20 +1,20 @@
-package org.polyfrost.example;
+package me.waffles.addition;
 
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.polyfrost.example.command.BedwarsStatsCommand;
-import org.polyfrost.example.command.DuelsStatsCommand;
-import org.polyfrost.example.config.ModConfig;
+import me.waffles.addition.command.BedwarsStatsCommand;
+import me.waffles.addition.command.DuelsStatsCommand;
+import me.waffles.addition.config.ModConfig;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import org.polyfrost.example.mixin.EntityLivingBaseAccessor;
-import org.polyfrost.example.util.Bedwars;
-import org.polyfrost.example.util.Duels;
-import org.polyfrost.example.util.EldestRemovalMap;
-import org.polyfrost.example.util.Ranks;
+import me.waffles.addition.mixin.EntityLivingBaseAccessor;
+import me.waffles.addition.util.Bedwars;
+import me.waffles.addition.util.Duels;
+import me.waffles.addition.util.EldestRemovalMap;
+import me.waffles.addition.util.PlayerProfile;
 
 @Mod(modid = Addition.MODID, name = Addition.NAME, version = Addition.VERSION)
 public class Addition {
@@ -26,7 +26,7 @@ public class Addition {
     public static int maxSize = 16;
     public static EldestRemovalMap<String, Duels> duelsStatsList = new EldestRemovalMap<>(maxSize);
     public static EldestRemovalMap<String, Bedwars> bedwarsStatsList = new EldestRemovalMap<>(maxSize);
-    public static EldestRemovalMap<String, Ranks> playerRanks = new EldestRemovalMap<>(maxSize);
+    public static EldestRemovalMap<String, PlayerProfile> playerProfileList = new EldestRemovalMap<>(maxSize);
     public static EldestRemovalMap<String, String> properPlayerNames = new EldestRemovalMap<>(maxSize);
 
     @Mod.EventHandler

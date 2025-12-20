@@ -1,4 +1,4 @@
-package org.polyfrost.example.util;
+package me.waffles.addition.util;
 
 public class Bedwars {
     private final int Bedwarsstar;
