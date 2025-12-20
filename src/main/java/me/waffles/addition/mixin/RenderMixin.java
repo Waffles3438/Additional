@@ -1,9 +1,9 @@
-package org.polyfrost.example.mixin;
+package me.waffles.addition.mixin;
 
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import org.polyfrost.example.config.ModConfig;
+import me.waffles.addition.config.ModConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

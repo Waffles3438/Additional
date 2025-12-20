@@ -1,10 +1,10 @@
-package org.polyfrost.example.config;
+package me.waffles.addition.config;
 
 import cc.polyfrost.oneconfig.config.annotations.*;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.utils.Notifications;
-import org.polyfrost.example.Addition;
+import me.waffles.addition.Addition;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
@@ -66,13 +66,6 @@ public class ModConfig extends Config {
     )
     public static boolean nametagsThroughWalls = false;
 
-    @Text(
-            name = "Hypixel API",
-            secure = true, multiline = false,
-            category = "Stat Checking"
-    )
-    public static String api = "";
-
     @Button(
             name = "Clear cache",
             text = "Clear",
@@ -81,7 +74,7 @@ public class ModConfig extends Config {
     Runnable runnable = () -> {
         Addition.bedwarsStatsList.clear();
         Addition.duelsStatsList.clear();
-        Addition.playerRanks.clear();
+        Addition.playerProfileList.clear();
         Addition.properPlayerNames.clear();
         Notifications.INSTANCE.send("Addition", "Cleared player cache", 3000);
     };

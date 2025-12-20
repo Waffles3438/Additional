@@ -1,4 +1,4 @@
-package org.polyfrost.example.mixin;
+package me.waffles.addition.mixin;
 
 import net.minecraft.entity.EntityLivingBase;
 import org.spongepowered.asm.mixin.Mixin;
