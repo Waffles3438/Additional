@@ -59,10 +59,8 @@ public class BedwarsStatsCommand {
                 return;
             }
 
-            UChat.chat(!profile.getRank().isEmpty() || !profile.getRank().equals("§7"));
             if(!profile.getRank().isEmpty() && !profile.getRank().equals("§7")) {
                 formattedName = profile.getRank() + " " + formattedName;
-                System.out.println("is this running");
             }
             if(!profile.getGuildTag().isEmpty()) {
                 formattedName = formattedName + " " + profile.getGuildTag();
