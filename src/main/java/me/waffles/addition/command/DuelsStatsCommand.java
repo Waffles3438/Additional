@@ -11,6 +11,7 @@ import me.waffles.addition.util.HypixelAPIUtils;
 import me.waffles.addition.Addition;
 import me.waffles.addition.util.Duels;
 import me.waffles.addition.util.PlayerProfile;
+import net.minecraft.client.Minecraft;
 
 import java.io.IOException;
 import java.util.NavigableMap;
@@ -28,67 +29,61 @@ public class DuelsStatsCommand {
 
     @Main
     private void main() {
-//        Username = Minecraft.getMinecraft().getSession().getProfile().getName();
-//        uuid = Minecraft.getMinecraft().getSession().getProfile().getId().toString();
-//
-//        Multithreading.runAsync(() -> {
-//            boolean request = true;
-//
-//            connection = newConnection("https://api.hypixel.net/v2/player?key=" + ModConfig.api + "&uuid=" + uuid);
-//            if (connection.isEmpty()) {
-//                request = false;
-//            }
-//
-//            if(request) {
-//                if (connection.equals("{\"success\":true,\"player\":null}")) {
-//                    // player is nicked
-//                    UChat.chat(Username + " has never logged on Hypixel");
-//                    return;
-//                }
-//
-//                try {
-//                    profile = getStringAsJson(connection).getAsJsonObject("player");
-//                    d = profile.getAsJsonObject("stats").getAsJsonObject("Duels");
-//                    ach = profile.getAsJsonObject("achievements");
-//                } catch (NullPointerException er) {
-//                    // never played duels or joined lobby
-//                    UChat.chat(Username + " has never played Duels");
-//                    Addition.duelsStatsList.put(Username, new Duels(-1, -1, -1, -1, -1, -1, -1, -1, Level));
-//                    try {
-//                        profile = getStringAsJson(connection).getAsJsonObject("player");
-//                        bw = profile.getAsJsonObject("stats").getAsJsonObject("Bedwars");
-//                        ach = profile.getAsJsonObject("achievements");
-//                        Bedwarsstar = getValue(ach, "bedwars_level");
-//                        Bedwarsfk = getValue(bw, "final_kills_bedwars");
-//                        Bedwarsbb = getValue(bw, "beds_broken_bedwars");
-//                        Bedwarsw = getValue(bw, "wins_bedwars");
-//                        Bedwarsfd = getValue(bw, "final_deaths_bedwars");
-//                        Bedwarsl = getValue(bw, "losses_bedwars");
-//                        Bedwarsbl = getValue(bw, "beds_lost_bedwars");
-//                        Bedwarsws = getValue(bw, "winstreak");
-//
-//                        if (Bedwarsfd != 0) Bedwarsfkdr = (double) Bedwarsfk / (double) Bedwarsfd;
-//                        else Bedwarsfkdr = Bedwarsfk;
-//                        Bedwarsfkdr = (double) Math.round(Bedwarsfkdr * 100) / 100;
-//
-//                        if (Bedwarsl != 0) Bedwarswlr = (double) Bedwarsw / (double) Bedwarsl;
-//                        else Bedwarswlr = Bedwarsw;
-//                        Bedwarswlr = (double) Math.round(Bedwarswlr * 100) / 100;
-//
-//                        if (Bedwarsbl != 0) Bedwarsbblr = (double) Bedwarsbb / (double) Bedwarsbl;
-//                        else Bedwarsbblr = Bedwarsbb;
-//                        Bedwarsbblr = (double) Math.round(Bedwarsbblr * 100) / 100;
-//
-//                        if(Bedwarsw != 0 && Bedwarsl != 0) Addition.bedwarsStatsList.put(Username, new Bedwars(Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws, Bedwarsfkdr, Bedwarswlr, Bedwarsbblr));
-//                    } catch (NullPointerException err) {
-//                        // never played bedwars
-//                        Addition.bedwarsStatsList.put(Username, new Bedwars(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
-//                    }
-//                    return;
-//                }
-//                requestStats(Username);
-//            } else getStats(Username);
-//        });
+        Username = Minecraft.getMinecraft().getSession().getProfile().getName();
+        uuid = Minecraft.getMinecraft().getSession().getProfile().getId().toString();
+
+        Multithreading.runAsync(() -> {
+            if(!Addition.duelsStatsList.containsKey(Username)) {
+                try {
+                    Addition.duelsStatsList.put(Username, fetchPlayerDuelsStats(uuid));
+                    Addition.playerProfileList.put(Username, fetchPlayerProfileData(uuid));
+                } catch (IOException e) {
+                    UChat.chat("Something broke while fetching stats!");
+                    throw new RuntimeException(e);
+                }
+            }
+
+            PlayerProfile profile = Addition.playerProfileList.get(Username);
+            String formattedName = Username;
+            if(profile.getRank() == null && profile.getGuildTag() == null) {
+                UChat.chat(Username + " has no Hypixel stats.");
+                return;
+            }
+
+            Duels duelsStats = Addition.duelsStatsList.get(Username);
+            Duelsdeaths = duelsStats.getDuelsDeaths();
+            if(Duelsdeaths == -1) {
+                UChat.chat(Username + " has never played Duels.");
+                return;
+            }
+
+            if(!profile.getRank().isEmpty() && !profile.getRank().equals("§7")) {
+                formattedName = profile.getRank() + " " + formattedName;
+            }
+            if(!profile.getGuildTag().isEmpty()) {
+                formattedName = formattedName + " " + profile.getGuildTag();
+            }
+
+            Duelsbws = duelsStats.getDuelsBWS();
+            Duelscws = duelsStats.getDuelsCWS();
+            Duelskdr = duelsStats.getDuelsKDR();
+            Duelskills = duelsStats.getDuelsKills();
+            Duelswins = duelsStats.getDuelsWins();
+            Duelswlr = duelsStats.getDuelsWLR();
+            Level = duelsStats.getLevel();
+            UChat.chat("§9------------------------------------------");
+            UChat.chat(getPlayerDivision(Duelswins) + formattedName);
+            UChat.chat("Level: " + Level);
+            UChat.chat("WLR: " + formatColors(Duelswlr, 10));
+            UChat.chat("Wins: " + formatColors(Duelswins, 20000));
+            UChat.chat("KDR: " + formatColors(Duelskdr, 10));
+            UChat.chat("Kills: " + formatColors(Duelskills, 20000));
+            if(Duelscws != -1 && Duelsbws != -1) {
+                UChat.chat("Current Winstreak: " + Duelscws);
+                UChat.chat("Best Winstreak: " + Duelsbws);
+            }
+            UChat.chat("§9------------------------------------------");
+        });
     }
 
     @Main
