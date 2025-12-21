@@ -33,7 +33,9 @@ public class DuelsStatsCommand {
         uuid = Minecraft.getMinecraft().getSession().getProfile().getId().toString();
 
         Multithreading.runAsync(() -> {
-            if(!Addition.duelsStatsList.containsKey(Username)) {
+            if(!Addition.duelsStatsList.containsKey(Username) || (
+                    Addition.playerProfileList.get(Username).getRank() == null
+                    && Addition.playerProfileList.get(Username).getGuildTag() == null)) {
                 try {
                     Addition.duelsStatsList.put(Username, fetchPlayerDuelsStats(uuid));
                     Addition.playerProfileList.put(Username, fetchPlayerProfileData(uuid));
@@ -44,11 +46,11 @@ public class DuelsStatsCommand {
             }
 
             PlayerProfile profile = Addition.playerProfileList.get(Username);
-            String formattedName = Username;
             if(profile.getRank() == null && profile.getGuildTag() == null) {
                 UChat.chat(Username + " has no Hypixel stats.");
                 return;
             }
+            String formattedName = Username;
 
             Duels duelsStats = Addition.duelsStatsList.get(Username);
             Duelsdeaths = duelsStats.getDuelsDeaths();
@@ -59,6 +61,8 @@ public class DuelsStatsCommand {
 
             if(!profile.getRank().isEmpty() && !profile.getRank().equals("§7")) {
                 formattedName = profile.getRank() + " " + formattedName;
+            } else if (profile.getRank().equals("§7")) {
+                formattedName = "§7" + formattedName;
             }
             if(!profile.getGuildTag().isEmpty()) {
                 formattedName = formattedName + " " + profile.getGuildTag();
@@ -95,12 +99,8 @@ public class DuelsStatsCommand {
                 uuid = minecraft.get("id").getAsString();
                 Username = minecraft.get("name").getAsString();
             } catch (Exception e) {
-                if (Addition.properPlayerNames.containsKey(player.toLowerCase())){
-                    Username = Addition.properPlayerNames.get(player.toLowerCase());
-                } else {
-                    UChat.chat("Invalid player");
-                    return;
-                }
+                UChat.chat("Invalid player");
+                return;
             }
 
             if(!Addition.duelsStatsList.containsKey(Username)) {
@@ -129,6 +129,8 @@ public class DuelsStatsCommand {
 
             if(!profile.getRank().isEmpty() && !profile.getRank().equals("§7")) {
                 formattedName = profile.getRank() + " " + formattedName;
+            } else if (profile.getRank().equals("§7")) {
+                formattedName = "§7" + formattedName;
             }
             if(!profile.getGuildTag().isEmpty()) {
                 formattedName = formattedName + " " + profile.getGuildTag();
