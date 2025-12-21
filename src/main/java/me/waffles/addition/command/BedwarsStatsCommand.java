@@ -6,7 +6,6 @@ import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
 import me.waffles.addition.Addition;
 import me.waffles.addition.util.Bedwars;
@@ -14,11 +13,7 @@ import me.waffles.addition.util.HypixelAPIUtils;
 import me.waffles.addition.util.PlayerProfile;
 import net.minecraft.client.Minecraft;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 @Command(value = "bw")
 public class BedwarsStatsCommand {
@@ -26,7 +21,7 @@ public class BedwarsStatsCommand {
     private String uuid, Username;
 
     // Bedwars
-    private int Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw, Bedwarsl, Bedwarsfd, Bedwarsbl, Bedwarsws;
+    private int Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw,Bedwarsws;
     private double Bedwarsfkdr, Bedwarswlr, Bedwarsbblr;
 
     @Main
@@ -35,7 +30,9 @@ public class BedwarsStatsCommand {
         uuid = Minecraft.getMinecraft().getSession().getProfile().getId().toString();
 
         Multithreading.runAsync(() -> {
-            if(!Addition.bedwarsStatsList.containsKey(Username)) {
+            if(!Addition.bedwarsStatsList.containsKey(Username) || (
+                    Addition.playerProfileList.get(Username).getRank() == null
+                            && Addition.playerProfileList.get(Username).getGuildTag() == null)) {
                 try {
                     Addition.bedwarsStatsList.put(Username, fetchPlayerBedwarsStats(uuid));
                     Addition.playerProfileList.put(Username, fetchPlayerProfileData(uuid));
@@ -61,6 +58,8 @@ public class BedwarsStatsCommand {
 
             if(!profile.getRank().isEmpty() && !profile.getRank().equals("§7")) {
                 formattedName = profile.getRank() + " " + formattedName;
+            } else if (profile.getRank().equals("§7")) {
+                formattedName = "§7" + formattedName;
             }
             if(!profile.getGuildTag().isEmpty()) {
                 formattedName = formattedName + " " + profile.getGuildTag();
@@ -69,9 +68,6 @@ public class BedwarsStatsCommand {
             Bedwarsfk = bedwarsStats.getBedwarsFinalKills();
             Bedwarsbb = bedwarsStats.getBedwarsBedBreaks();
             Bedwarsw = bedwarsStats.getBedwarsWins();
-            Bedwarsl = bedwarsStats.getBedwarsLosses();
-            Bedwarsfd = bedwarsStats.getBedwarsFinalDeaths();
-            Bedwarsbl = bedwarsStats.getBedwarsBedsLost();
             Bedwarsws = bedwarsStats.getBedwarsWinStreak();
             Bedwarsfkdr = bedwarsStats.getBedwarsFKDR();
             Bedwarswlr = bedwarsStats.getBedwarsWLR();
@@ -98,12 +94,8 @@ public class BedwarsStatsCommand {
                 uuid = minecraft.get("id").getAsString();
                 Username = minecraft.get("name").getAsString();
             } catch (Exception e) {
-                if (Addition.properPlayerNames.containsKey(player.toLowerCase())){
-                    Username = Addition.properPlayerNames.get(player.toLowerCase());
-                } else {
-                    UChat.chat("Invalid player");
-                    return;
-                }
+                UChat.chat("Invalid player");
+                return;
             }
 
             if(!Addition.bedwarsStatsList.containsKey(Username)) {
@@ -130,10 +122,10 @@ public class BedwarsStatsCommand {
                 return;
             }
 
-            UChat.chat(!profile.getRank().isEmpty() || !profile.getRank().equals("§7"));
             if(!profile.getRank().isEmpty() && !profile.getRank().equals("§7")) {
                 formattedName = profile.getRank() + " " + formattedName;
-                System.out.println("is this running");
+            } else if (profile.getRank().equals("§7")) {
+                formattedName = "§7" + formattedName;
             }
             if(!profile.getGuildTag().isEmpty()) {
                 formattedName = formattedName + " " + profile.getGuildTag();
@@ -142,9 +134,6 @@ public class BedwarsStatsCommand {
             Bedwarsfk = bedwarsStats.getBedwarsFinalKills();
             Bedwarsbb = bedwarsStats.getBedwarsBedBreaks();
             Bedwarsw = bedwarsStats.getBedwarsWins();
-            Bedwarsl = bedwarsStats.getBedwarsLosses();
-            Bedwarsfd = bedwarsStats.getBedwarsFinalDeaths();
-            Bedwarsbl = bedwarsStats.getBedwarsBedsLost();
             Bedwarsws = bedwarsStats.getBedwarsWinStreak();
             Bedwarsfkdr = bedwarsStats.getBedwarsFKDR();
             Bedwarswlr = bedwarsStats.getBedwarsWLR();
@@ -185,48 +174,6 @@ public class BedwarsStatsCommand {
             return null;
         }
         return HypixelAPIUtils.parseBedwarsPlayerData(stjson);
-    }
-
-    private String getString(JsonObject type, String member) {
-        try {
-            return type.get(member).getAsString();
-        } catch (NullPointerException er) {
-            return null;
-        }
-    }
-
-    private JsonObject getStringAsJson(String text) {
-        return new JsonParser().parse(text).getAsJsonObject();
-    }
-
-    private String newConnection(String link) {
-        URL url;
-        String result = "";
-        HttpURLConnection con = null;
-        try {
-            url = new URL(link);
-            con = (HttpURLConnection) url.openConnection();
-            result = getContents(con);
-        } catch (IOException ignored) { }
-        finally {
-            if (con != null) con.disconnect();
-        }
-        return result;
-    }
-
-    private String getContents(HttpURLConnection con) {
-        if (con != null) {
-            // since BufferedReader is defined within try catch, close is called regardless of completion
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()))) {
-                String input;
-                StringBuilder sb = new StringBuilder();
-                while ((input = br.readLine()) != null) {
-                    sb.append(input);
-                }
-                return sb.toString();
-            } catch (IOException ignored) { }
-        }
-        return "";
     }
 
     public enum Rank {
@@ -362,51 +309,6 @@ public class BedwarsStatsCommand {
         else if (number < 4900) return Rank.FOUREIGHT;
         else if (number < 5000) return Rank.FOURNINE;
         else return Rank.FIVEZERO;
-    }
-
-    private final double BASE = 10_000;
-    private final double GROWTH = 2_500;
-
-    private double getLevel(double exp) {
-        double GROWTH_DIVIDES_2 = 2 / GROWTH;
-        double REVERSE_PQ_PREFIX = -(BASE - 0.5 * GROWTH) / GROWTH;
-        double REVERSE_CONST = REVERSE_PQ_PREFIX * REVERSE_PQ_PREFIX;
-        return exp < 0 ? 1 : Math.floor(1 + REVERSE_PQ_PREFIX + Math.sqrt(REVERSE_CONST + GROWTH_DIVIDES_2 * exp));
-    }
-
-    private double getExactLevel(double exp) {
-        return getLevel(exp) + getPercentageToNextLevel(exp);
-    }
-
-    private double getTotalExpToFullLevel(double level) {
-        double HALF_GROWTH = 0.5 * GROWTH;
-        return (HALF_GROWTH * (level - 2) + BASE) * (level - 1);
-    }
-
-    private double getTotalExpToLevel(double level) {
-        double lv = Math.floor(level), x0 = getTotalExpToFullLevel(lv);
-        if (level == lv) return x0;
-        return (getTotalExpToFullLevel(lv + 1) - x0) * (level % 1) + x0;
-    }
-
-    private double getPercentageToNextLevel(double exp) {
-        double lv = getLevel(exp), x0 = getTotalExpToLevel(lv);
-        return (exp - x0) / (getTotalExpToLevel(lv + 1) - x0);
-    }
-
-    private String levelColor(String level) {
-        double lvl = Double.parseDouble(level);
-        if(lvl < 35) return "§c" + level;
-        else if(lvl < 45) return "§6" + level;
-        else if(lvl < 55) return "§a" + level;
-        else if(lvl < 65) return "§e" + level;
-        else if(lvl < 75) return "§d" + level;
-        else if(lvl < 85) return "§f" + level;
-        else if(lvl < 95) return "§9" + level;
-        else if(lvl < 150) return "§2" + level;
-        else if(lvl < 200) return "§4" + level;
-        else if(lvl < 250) return "§5" + level;
-        else return "§0" + level;
     }
 
     private String formatColors(int stat, int god) {

@@ -1,21 +1,15 @@
 package me.waffles.addition.util;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.waffles.addition.command.DuelsStatsCommand;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,17 +38,16 @@ public class HypixelAPIUtils {
                 }
                 in.close();
 
-                if (urlString.contains("nadeshiko")) {
-                    Pattern pattern = Pattern.compile(
-                            "playerData = JSON.parse\\(decodeURIComponent\\(\"(.*?)\"\\)\\)"
-                    );
-                    Matcher matcher = pattern.matcher(response.toString());
+                Pattern pattern = Pattern.compile(
+                        "playerData = JSON.parse\\(decodeURIComponent\\(\"(.*?)\"\\)\\)"
+                );
+                Matcher matcher = pattern.matcher(response.toString());
 
-                    if (matcher.find()) {
-                        String playerDataEncoded = matcher.group(1);
-                        return URLDecoder.decode(playerDataEncoded, "UTF-8");
-                    }
+                if (matcher.find()) {
+                    String playerDataEncoded = matcher.group(1);
+                    return URLDecoder.decode(playerDataEncoded, "UTF-8");
                 }
+
                 return response.toString();
             }
         } catch (Exception e) {
@@ -67,15 +60,8 @@ public class HypixelAPIUtils {
         return "";
     }
 
-    public static PlayerProfile parsePlayerProfilePlayerData(String json) throws IOException {
+    public static PlayerProfile parsePlayerProfilePlayerData(String json) {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
-
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-        Files.write(
-                Paths.get("nothing.json"),
-                gson.toJson(rootObject).getBytes("UTF-8")
-        );
 
         boolean inGuild = true;
 
@@ -124,15 +110,8 @@ public class HypixelAPIUtils {
         );
     }
 
-    public static Duels parseDuelsPlayerData(String json) throws IOException {
+    public static Duels parseDuelsPlayerData(String json) {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
-
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-        Files.write(
-                Paths.get("player.json"),
-                gson.toJson(rootObject).getBytes("UTF-8")
-        );
 
         JsonObject duelsStats = null, profile = null;
 
@@ -226,9 +205,6 @@ public class HypixelAPIUtils {
                         -1,
                         -1,
                         -1,
-                        -1,
-                        -1,
-                        -1,
                         -1
                 );
             }
@@ -282,9 +258,6 @@ public class HypixelAPIUtils {
             finalKills,
             bedsBroken,
             wins,
-            losses,
-            finalDeaths,
-            bedsLost,
             winstreak,
             fkdr,
             wlr,
