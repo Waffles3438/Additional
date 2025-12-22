@@ -264,6 +264,4 @@ public class HypixelAPIUtils {
             bblr
         );
     }
-
-
 }
