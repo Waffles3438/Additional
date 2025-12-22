@@ -20,22 +20,22 @@ import java.util.TreeMap;
 @Command(value = "d")
 public class DuelsStatsCommand {
 
-    private String uuid, Username;
-
     @Main
     private void main() {
-        Username = Minecraft.getMinecraft().getSession().getProfile().getName();
-        uuid = Minecraft.getMinecraft().getSession().getProfile().getId().toString();
+        String Username = Minecraft.getMinecraft().getSession().getProfile().getName();
+        String uuid = Minecraft.getMinecraft().getSession().getProfile().getId().toString();
 
-        Multithreading.runAsync(this::fetchAndPrintStats);
+        Multithreading.runAsync(() ->
+            fetchAndPrintStats(Username, uuid)
+        );
     }
 
     @Main
     private void main(GameProfile player1) {
         Multithreading.runAsync(() -> {
-            String player = player1.getName();
+            String Username, uuid;
             try {
-                JsonObject minecraft = NetworkUtils.getJsonElement("https://api.minecraftservices.com/minecraft/profile/lookup/name/" + player).getAsJsonObject();
+                JsonObject minecraft = NetworkUtils.getJsonElement("https://api.minecraftservices.com/minecraft/profile/lookup/name/" + player1).getAsJsonObject();
                 uuid = minecraft.get("id").getAsString();
                 Username = minecraft.get("name").getAsString();
             } catch (Exception e) {
@@ -43,11 +43,11 @@ public class DuelsStatsCommand {
                 return;
             }
 
-            fetchAndPrintStats();
+            fetchAndPrintStats(Username, uuid);
         });
     }
 
-    private void fetchAndPrintStats() {
+    private void fetchAndPrintStats(String Username, String uuid) {
 
         // fetch stats here
         if(!Addition.duelsStatsList.containsKey(Username) ||
@@ -63,10 +63,10 @@ public class DuelsStatsCommand {
         }
 
         // print stats here
-        printStats();
+        printStats(Username);
     }
 
-    private void printStats() {
+    private void printStats(String Username) {
         PlayerProfile profile = Addition.playerProfileList.get(Username);
         String formattedName = Username;
         if(profile.getRank() == null && profile.getGuildTag() == null) {
