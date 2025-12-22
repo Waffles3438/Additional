@@ -22,72 +22,12 @@ public class DuelsStatsCommand {
 
     private String uuid, Username;
 
-    // Duels
-    private int Duelswins, Duelskills, Duelsdeaths, Duelscws, Duelsbws;
-    private double Duelswlr, Duelskdr;
-    private String Level;
-
     @Main
     private void main() {
         Username = Minecraft.getMinecraft().getSession().getProfile().getName();
         uuid = Minecraft.getMinecraft().getSession().getProfile().getId().toString();
 
-        Multithreading.runAsync(() -> {
-            if(!Addition.duelsStatsList.containsKey(Username) || (
-                    Addition.playerProfileList.get(Username).getRank() == null
-                    && Addition.playerProfileList.get(Username).getGuildTag() == null)) {
-                try {
-                    Addition.duelsStatsList.put(Username, fetchPlayerDuelsStats(uuid));
-                    Addition.playerProfileList.put(Username, fetchPlayerProfileData(uuid));
-                } catch (IOException e) {
-                    UChat.chat("Something broke while fetching stats!");
-                    throw new RuntimeException(e);
-                }
-            }
-
-            PlayerProfile profile = Addition.playerProfileList.get(Username);
-            if(profile.getRank() == null && profile.getGuildTag() == null) {
-                UChat.chat(Username + " has no Hypixel stats.");
-                return;
-            }
-            String formattedName = Username;
-
-            Duels duelsStats = Addition.duelsStatsList.get(Username);
-            Duelsdeaths = duelsStats.getDuelsDeaths();
-            if(Duelsdeaths == -1) {
-                UChat.chat(Username + " has never played Duels.");
-                return;
-            }
-
-            if(!profile.getRank().isEmpty() && !profile.getRank().equals("§7")) {
-                formattedName = profile.getRank() + " " + formattedName;
-            } else if (profile.getRank().equals("§7")) {
-                formattedName = "§7" + formattedName;
-            }
-            if(!profile.getGuildTag().isEmpty()) {
-                formattedName = formattedName + " " + profile.getGuildTag();
-            }
-
-            Duelsbws = duelsStats.getDuelsBWS();
-            Duelscws = duelsStats.getDuelsCWS();
-            Duelskdr = duelsStats.getDuelsKDR();
-            Duelskills = duelsStats.getDuelsKills();
-            Duelswins = duelsStats.getDuelsWins();
-            Duelswlr = duelsStats.getDuelsWLR();
-            Level = duelsStats.getLevel();
-            UChat.chat("§9------------------------------------------");
-            UChat.chat(getPlayerDivision(Duelswins) + formattedName);
-            UChat.chat("Level: " + Level);
-            UChat.chat("WLR: " + formatColors(Duelswlr, 10));
-            UChat.chat("Wins: " + formatColors(Duelswins, 20000));
-            UChat.chat("KDR: " + formatColors(Duelskdr, 10));
-            UChat.chat("Kills: " + formatColors(Duelskills, 20000));
-            if(Duelscws != -1 && Duelsbws != -1) {
-                UChat.chat("Current Winstreak: " + Duelscws);
-                UChat.chat("Best Winstreak: " + Duelsbws);
-            }
-            UChat.chat("§9------------------------------------------");
-        });
+        Multithreading.runAsync(this::fetchAndPrintStats);
     }
 
     @Main
@@ -103,59 +43,66 @@ public class DuelsStatsCommand {
                 return;
             }
 
-            if(!Addition.duelsStatsList.containsKey(Username)) {
-                try {
-                    Addition.duelsStatsList.put(Username, fetchPlayerDuelsStats(uuid));
-                    Addition.playerProfileList.put(Username, fetchPlayerProfileData(uuid));
-                } catch (IOException e) {
-                    UChat.chat("Something broke while fetching stats!");
-                    throw new RuntimeException(e);
-                }
-            }
-
-            PlayerProfile profile = Addition.playerProfileList.get(Username);
-            String formattedName = Username;
-            if(profile.getRank() == null && profile.getGuildTag() == null) {
-                UChat.chat(Username + " has no Hypixel stats.");
-                return;
-            }
-
-            Duels duelsStats = Addition.duelsStatsList.get(Username);
-            Duelsdeaths = duelsStats.getDuelsDeaths();
-            if(Duelsdeaths == -1) {
-                UChat.chat(Username + " has never played Duels.");
-                return;
-            }
-
-            if(!profile.getRank().isEmpty() && !profile.getRank().equals("§7")) {
-                formattedName = profile.getRank() + " " + formattedName;
-            } else if (profile.getRank().equals("§7")) {
-                formattedName = "§7" + formattedName;
-            }
-            if(!profile.getGuildTag().isEmpty()) {
-                formattedName = formattedName + " " + profile.getGuildTag();
-            }
-
-            Duelsbws = duelsStats.getDuelsBWS();
-            Duelscws = duelsStats.getDuelsCWS();
-            Duelskdr = duelsStats.getDuelsKDR();
-            Duelskills = duelsStats.getDuelsKills();
-            Duelswins = duelsStats.getDuelsWins();
-            Duelswlr = duelsStats.getDuelsWLR();
-            Level = duelsStats.getLevel();
-            UChat.chat("§9------------------------------------------");
-            UChat.chat(getPlayerDivision(Duelswins) + formattedName);
-            UChat.chat("Level: " + Level);
-            UChat.chat("WLR: " + formatColors(Duelswlr, 10));
-            UChat.chat("Wins: " + formatColors(Duelswins, 20000));
-            UChat.chat("KDR: " + formatColors(Duelskdr, 10));
-            UChat.chat("Kills: " + formatColors(Duelskills, 20000));
-            if(Duelscws != -1 && Duelsbws != -1) {
-                UChat.chat("Current Winstreak: " + Duelscws);
-                UChat.chat("Best Winstreak: " + Duelsbws);
-            }
-            UChat.chat("§9------------------------------------------");
+            fetchAndPrintStats();
         });
+    }
+
+    private void fetchAndPrintStats() {
+
+        // fetch stats here
+        if(!Addition.duelsStatsList.containsKey(Username) ||
+                (Addition.playerProfileList.get(Username).getRank() == null
+                && Addition.playerProfileList.get(Username).getGuildTag() == null)) {
+            try {
+                Addition.duelsStatsList.put(Username, fetchPlayerDuelsStats(uuid));
+                Addition.playerProfileList.put(Username, fetchPlayerProfileData(uuid));
+            } catch (IOException e) {
+                UChat.chat("Something broke while fetching stats!");
+                throw new RuntimeException(e);
+            }
+        }
+
+        // print stats here
+        printStats();
+    }
+
+    private void printStats() {
+        PlayerProfile profile = Addition.playerProfileList.get(Username);
+        String formattedName = Username;
+        if(profile.getRank() == null && profile.getGuildTag() == null) {
+            UChat.chat(Username + " has no Hypixel stats.");
+            return;
+        }
+
+        Duels duelsStats = Addition.duelsStatsList.get(Username);
+        int duelsdeaths = duelsStats.getDuelsDeaths();
+        if(duelsdeaths == -1) {
+            UChat.chat(Username + " has never played Duels.");
+            return;
+        }
+
+        formattedName = BedwarsStatsCommand.formateName(profile, formattedName);
+
+        int duelsbws = duelsStats.getDuelsBWS();
+        int duelscws = duelsStats.getDuelsCWS();
+        double duelskdr = duelsStats.getDuelsKDR();
+        int duelskills = duelsStats.getDuelsKills();
+        // Duels
+        int duelswins = duelsStats.getDuelsWins();
+        double duelswlr = duelsStats.getDuelsWLR();
+        String level = duelsStats.getLevel();
+        UChat.chat("§9------------------------------------------");
+        UChat.chat(getPlayerDivision(duelswins) + formattedName);
+        UChat.chat("Level: " + level);
+        UChat.chat("WLR: " + formatColors(duelswlr, 10));
+        UChat.chat("Wins: " + formatColors(duelswins, 20000));
+        UChat.chat("KDR: " + formatColors(duelskdr, 10));
+        UChat.chat("Kills: " + formatColors(duelskills, 20000));
+        if(duelscws != -1 && duelsbws != -1) {
+            UChat.chat("Current Winstreak: " + duelscws);
+            UChat.chat("Best Winstreak: " + duelsbws);
+        }
+        UChat.chat("§9------------------------------------------");
     }
 
     public String fetchPlayerData(String uuid) {

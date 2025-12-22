@@ -20,69 +20,12 @@ public class BedwarsStatsCommand {
 
     private String uuid, Username;
 
-    // Bedwars
-    private int Bedwarsstar, Bedwarsfk, Bedwarsbb, Bedwarsw,Bedwarsws;
-    private double Bedwarsfkdr, Bedwarswlr, Bedwarsbblr;
-
     @Main
     private void main() {
         Username = Minecraft.getMinecraft().getSession().getProfile().getName();
         uuid = Minecraft.getMinecraft().getSession().getProfile().getId().toString();
 
-        Multithreading.runAsync(() -> {
-            if(!Addition.bedwarsStatsList.containsKey(Username) || (
-                    Addition.playerProfileList.get(Username).getRank() == null
-                            && Addition.playerProfileList.get(Username).getGuildTag() == null)) {
-                try {
-                    Addition.bedwarsStatsList.put(Username, fetchPlayerBedwarsStats(uuid));
-                    Addition.playerProfileList.put(Username, fetchPlayerProfileData(uuid));
-                } catch (IOException e) {
-                    UChat.chat("Something broke while fetching stats!");
-                    throw new RuntimeException(e);
-                }
-            }
-
-            PlayerProfile profile = Addition.playerProfileList.get(Username);
-            String formattedName = Username;
-            if(profile.getRank() == null && profile.getGuildTag() == null) {
-                UChat.chat(Username + " has no Hypixel stats.");
-                return;
-            }
-
-            Bedwars bedwarsStats = Addition.bedwarsStatsList.get(Username);
-            Bedwarsstar = bedwarsStats.getBedwarsStar();
-            if (Bedwarsstar == -1) {
-                UChat.chat(Username + " has never played Bedwars");
-                return;
-            }
-
-            if(!profile.getRank().isEmpty() && !profile.getRank().equals("§7")) {
-                formattedName = profile.getRank() + " " + formattedName;
-            } else if (profile.getRank().equals("§7")) {
-                formattedName = "§7" + formattedName;
-            }
-            if(!profile.getGuildTag().isEmpty()) {
-                formattedName = formattedName + " " + profile.getGuildTag();
-            }
-
-            Bedwarsfk = bedwarsStats.getBedwarsFinalKills();
-            Bedwarsbb = bedwarsStats.getBedwarsBedBreaks();
-            Bedwarsw = bedwarsStats.getBedwarsWins();
-            Bedwarsws = bedwarsStats.getBedwarsWinStreak();
-            Bedwarsfkdr = bedwarsStats.getBedwarsFKDR();
-            Bedwarswlr = bedwarsStats.getBedwarsWLR();
-            Bedwarsbblr = bedwarsStats.getBedwarsBBLR();
-            UChat.chat("§9------------------------------------------");
-            UChat.chat(getFormattedRank(Bedwarsstar) + " " + formattedName);
-            UChat.chat("FKDR: " + formatColors(Bedwarsfkdr, 15));
-            UChat.chat("Final kills: " + formatColors(Bedwarsfk, 25000));
-            UChat.chat("WLR: " + formatColors(Bedwarswlr, 5));
-            UChat.chat("Wins: " + formatColors(Bedwarsw, 20000));
-            UChat.chat("BBLR: " + formatColors(Bedwarsbblr, 5));
-            UChat.chat("Beds: " + formatColors(Bedwarsbb, 30000));
-            if(Bedwarsws != -1) UChat.chat("Winstreak: " + Bedwarsws);
-            UChat.chat("§9------------------------------------------");
-        });
+        Multithreading.runAsync(this::fetchAndPrintStats);
     }
 
     @Main
@@ -98,57 +41,76 @@ public class BedwarsStatsCommand {
                 return;
             }
 
-            if(!Addition.bedwarsStatsList.containsKey(Username)) {
-                try {
-                    Addition.bedwarsStatsList.put(Username, fetchPlayerBedwarsStats(uuid));
-                    Addition.playerProfileList.put(Username, fetchPlayerProfileData(uuid));
-                } catch (IOException e) {
-                    UChat.chat("Something broke while fetching stats!");
-                    throw new RuntimeException(e);
-                }
-            }
-
-            PlayerProfile profile = Addition.playerProfileList.get(Username);
-            String formattedName = Username;
-            if(profile.getRank() == null && profile.getGuildTag() == null) {
-                UChat.chat(Username + " has no Hypixel stats.");
-                return;
-            }
-
-            Bedwars bedwarsStats = Addition.bedwarsStatsList.get(Username);
-            Bedwarsstar = bedwarsStats.getBedwarsStar();
-            if (Bedwarsstar == -1) {
-                UChat.chat(Username + " has never played Bedwars");
-                return;
-            }
-
-            if(!profile.getRank().isEmpty() && !profile.getRank().equals("§7")) {
-                formattedName = profile.getRank() + " " + formattedName;
-            } else if (profile.getRank().equals("§7")) {
-                formattedName = "§7" + formattedName;
-            }
-            if(!profile.getGuildTag().isEmpty()) {
-                formattedName = formattedName + " " + profile.getGuildTag();
-            }
-
-            Bedwarsfk = bedwarsStats.getBedwarsFinalKills();
-            Bedwarsbb = bedwarsStats.getBedwarsBedBreaks();
-            Bedwarsw = bedwarsStats.getBedwarsWins();
-            Bedwarsws = bedwarsStats.getBedwarsWinStreak();
-            Bedwarsfkdr = bedwarsStats.getBedwarsFKDR();
-            Bedwarswlr = bedwarsStats.getBedwarsWLR();
-            Bedwarsbblr = bedwarsStats.getBedwarsBBLR();
-            UChat.chat("§9------------------------------------------");
-            UChat.chat(getFormattedRank(Bedwarsstar) + " " + formattedName);
-            UChat.chat("FKDR: " + formatColors(Bedwarsfkdr, 15));
-            UChat.chat("Final kills: " + formatColors(Bedwarsfk, 25000));
-            UChat.chat("WLR: " + formatColors(Bedwarswlr, 5));
-            UChat.chat("Wins: " + formatColors(Bedwarsw, 20000));
-            UChat.chat("BBLR: " + formatColors(Bedwarsbblr, 5));
-            UChat.chat("Beds: " + formatColors(Bedwarsbb, 30000));
-            if(Bedwarsws != -1) UChat.chat("Winstreak: " + Bedwarsws);
-            UChat.chat("§9------------------------------------------");
+            fetchAndPrintStats();
         });
+    }
+
+    private void fetchAndPrintStats() {
+
+        // fetch stats here
+        if(!Addition.bedwarsStatsList.containsKey(Username) ||
+                (Addition.playerProfileList.get(Username).getRank() == null
+                && Addition.playerProfileList.get(Username).getGuildTag() == null)) {
+            try {
+                Addition.bedwarsStatsList.put(Username, fetchPlayerBedwarsStats(uuid));
+                Addition.playerProfileList.put(Username, fetchPlayerProfileData(uuid));
+            } catch (IOException e) {
+                UChat.chat("Something broke while fetching stats!");
+                throw new RuntimeException(e);
+            }
+        }
+
+        // prints stats here
+        printStats();
+    }
+
+    private void printStats() {
+        PlayerProfile profile = Addition.playerProfileList.get(Username);
+        String formattedName = Username;
+        if(profile.getRank() == null && profile.getGuildTag() == null) {
+            UChat.chat(Username + " has no Hypixel stats.");
+            return;
+        }
+
+        Bedwars bedwarsStats = Addition.bedwarsStatsList.get(Username);
+
+        int bedwarsstar = bedwarsStats.getBedwarsStar();
+        if (bedwarsstar == -1) {
+            UChat.chat(Username + " has never played Bedwars");
+            return;
+        }
+
+        formattedName = formateName(profile, formattedName);
+
+        int bedwarsfk = bedwarsStats.getBedwarsFinalKills();
+        int bedwarsbb = bedwarsStats.getBedwarsBedBreaks();
+        int bedwarsw = bedwarsStats.getBedwarsWins();
+        int bedwarsws = bedwarsStats.getBedwarsWinStreak();
+        double bedwarsfkdr = bedwarsStats.getBedwarsFKDR();
+        double bedwarswlr = bedwarsStats.getBedwarsWLR();
+        double bedwarsbblr = bedwarsStats.getBedwarsBBLR();
+        UChat.chat("§9------------------------------------------");
+        UChat.chat(getFormattedRank(bedwarsstar) + " " + formattedName);
+        UChat.chat("FKDR: " + formatColors(bedwarsfkdr, 15));
+        UChat.chat("Final kills: " + formatColors(bedwarsfk, 25000));
+        UChat.chat("WLR: " + formatColors(bedwarswlr, 5));
+        UChat.chat("Wins: " + formatColors(bedwarsw, 20000));
+        UChat.chat("BBLR: " + formatColors(bedwarsbblr, 5));
+        UChat.chat("Beds: " + formatColors(bedwarsbb, 30000));
+        if(bedwarsws != -1) UChat.chat("Winstreak: " + bedwarsws);
+        UChat.chat("§9------------------------------------------");
+    }
+
+    static String formateName(PlayerProfile profile, String formattedName) {
+        if(!profile.getRank().isEmpty() && !profile.getRank().equals("§7")) {
+            formattedName = profile.getRank() + " " + formattedName;
+        } else if (profile.getRank().equals("§7")) {
+            formattedName = "§7" + formattedName;
+        }
+        if(!profile.getGuildTag().isEmpty()) {
+            formattedName = formattedName + " " + profile.getGuildTag();
+        }
+        return formattedName;
     }
 
     public String fetchPlayerData(String uuid) {
