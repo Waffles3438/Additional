@@ -33,11 +33,11 @@ public class DuelsStatsCommand {
     @Main
     private void main(GameProfile player1) {
         Multithreading.runAsync(() -> {
+            String player = player1.getName();
             String Username, uuid;
             try {
-                JsonObject minecraft = NetworkUtils.getJsonElement("https://api.minecraftservices.com/minecraft/profile/lookup/name/" + player1).getAsJsonObject();
-                uuid = minecraft.get("id").getAsString();
-                Username = minecraft.get("name").getAsString();
+                uuid = player1.getId().toString();
+                Username = player1.getName();
             } catch (Exception e) {
                 UChat.chat("Invalid player");
                 return;
@@ -50,12 +50,12 @@ public class DuelsStatsCommand {
     private void fetchAndPrintStats(String Username, String uuid) {
 
         // fetch stats here
-        if(!Addition.duelsStatsList.containsKey(Username) ||
-                (Addition.playerProfileList.get(Username).getRank() == null
-                && Addition.playerProfileList.get(Username).getGuildTag() == null)) {
+        if(!Addition.duelsStatsList.containsKey(Username.toLowerCase()) ||
+                (Addition.playerProfileList.get(Username.toLowerCase()).getRank() == null
+                && Addition.playerProfileList.get(Username.toLowerCase()).getGuildTag() == null)) {
             try {
-                Addition.duelsStatsList.put(Username, fetchPlayerDuelsStats(uuid));
-                Addition.playerProfileList.put(Username, fetchPlayerProfileData(uuid));
+                Addition.duelsStatsList.put(Username.toLowerCase(), fetchPlayerDuelsStats(uuid));
+                Addition.playerProfileList.put(Username.toLowerCase(), fetchPlayerProfileData(uuid));
             } catch (IOException e) {
                 UChat.chat("Something broke while fetching stats!");
                 throw new RuntimeException(e);
@@ -67,14 +67,16 @@ public class DuelsStatsCommand {
     }
 
     private void printStats(String Username) {
-        PlayerProfile profile = Addition.playerProfileList.get(Username);
-        String formattedName = Username;
-        if(profile.getRank() == null && profile.getGuildTag() == null) {
+        PlayerProfile profile = Addition.playerProfileList.get(Username.toLowerCase());
+
+        if((profile.getRank() == null && profile.getGuildTag() == null)
+                || profile.getDisplayName() == null) {
             UChat.chat(Username + " has no Hypixel stats.");
             return;
         }
+        String formattedName = profile.getDisplayName();
 
-        Duels duelsStats = Addition.duelsStatsList.get(Username);
+        Duels duelsStats = Addition.duelsStatsList.get(Username.toLowerCase());
         int duelsdeaths = duelsStats.getDuelsDeaths();
         if(duelsdeaths == -1) {
             UChat.chat(Username + " has never played Duels.");

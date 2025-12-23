@@ -35,9 +35,8 @@ public class BedwarsStatsCommand {
             String player = player1.getName();
             String Username, uuid;
             try {
-                JsonObject minecraft = NetworkUtils.getJsonElement("https://api.minecraftservices.com/minecraft/profile/lookup/name/" + player).getAsJsonObject();
-                uuid = minecraft.get("id").getAsString();
-                Username = minecraft.get("name").getAsString();
+                uuid = player1.getId().toString();
+                Username = player1.getName();
             } catch (Exception e) {
                 UChat.chat("Invalid player");
                 return;
@@ -50,12 +49,12 @@ public class BedwarsStatsCommand {
     private void fetchAndPrintStats(String Username, String uuid) {
 
         // fetch stats here
-        if(!Addition.bedwarsStatsList.containsKey(Username) ||
-                (Addition.playerProfileList.get(Username).getRank() == null
-                && Addition.playerProfileList.get(Username).getGuildTag() == null)) {
+        if(!Addition.bedwarsStatsList.containsKey(Username.toLowerCase()) ||
+                (Addition.playerProfileList.get(Username.toLowerCase()).getRank() == null
+                && Addition.playerProfileList.get(Username.toLowerCase()).getGuildTag() == null)) {
             try {
-                Addition.bedwarsStatsList.put(Username, fetchPlayerBedwarsStats(uuid));
-                Addition.playerProfileList.put(Username, fetchPlayerProfileData(uuid));
+                Addition.bedwarsStatsList.put(Username.toLowerCase(), fetchPlayerBedwarsStats(uuid));
+                Addition.playerProfileList.put(Username.toLowerCase(), fetchPlayerProfileData(uuid));
             } catch (IOException e) {
                 UChat.chat("Something broke while fetching stats!");
                 throw new RuntimeException(e);
@@ -67,14 +66,16 @@ public class BedwarsStatsCommand {
     }
 
     private void printStats(String Username) {
-        PlayerProfile profile = Addition.playerProfileList.get(Username);
-        String formattedName = Username;
-        if(profile.getRank() == null && profile.getGuildTag() == null) {
+        PlayerProfile profile = Addition.playerProfileList.get(Username.toLowerCase());
+
+        if((profile.getRank() == null && profile.getGuildTag() == null)
+        || profile.getDisplayName() == null) {
             UChat.chat(Username + " has no Hypixel stats.");
             return;
         }
+        String formattedName = profile.getDisplayName();
 
-        Bedwars bedwarsStats = Addition.bedwarsStatsList.get(Username);
+        Bedwars bedwarsStats = Addition.bedwarsStatsList.get(Username.toLowerCase());
 
         int bedwarsstar = bedwarsStats.getBedwarsStar();
         if (bedwarsstar == -1) {
