@@ -73,6 +73,7 @@ public class HypixelAPIUtils {
             if(profile == null) {
                 return new PlayerProfile(
                         null,
+                        null,
                         null
                 );
             }
@@ -80,6 +81,7 @@ public class HypixelAPIUtils {
             UChat.chat("Something broke in parsePlayerProfilePlayerData");
             e.printStackTrace();
             return new PlayerProfile(
+                    null,
                     null,
                     null
             );
@@ -93,6 +95,10 @@ public class HypixelAPIUtils {
             e.printStackTrace();
         }
 
+        String displayName = rootObject.has("name")
+                ? rootObject.get("name").getAsString()
+                : null;
+
         String guildTag = "";
         if (inGuild) {
             guildTag = guild.has("tag")
@@ -105,6 +111,7 @@ public class HypixelAPIUtils {
                 : "";
 
         return new PlayerProfile(
+                displayName,
                 rank,
                 guildTag
         );
