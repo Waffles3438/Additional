@@ -1,17 +1,21 @@
 package me.waffles.addition.util;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.waffles.addition.command.DuelsStatsCommand;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLDecoder;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class HypixelAPIUtils {
     public static String fetchPlayerData(String urlString, String userAgent) {
@@ -38,16 +42,6 @@ public class HypixelAPIUtils {
                 }
                 in.close();
 
-                Pattern pattern = Pattern.compile(
-                        "playerData = JSON.parse\\(decodeURIComponent\\(\"(.*?)\"\\)\\)"
-                );
-                Matcher matcher = pattern.matcher(response.toString());
-
-                if (matcher.find()) {
-                    String playerDataEncoded = matcher.group(1);
-                    return URLDecoder.decode(playerDataEncoded, "UTF-8");
-                }
-
                 return response.toString();
             }
         } catch (Exception e) {
@@ -63,16 +57,14 @@ public class HypixelAPIUtils {
     public static PlayerProfile parsePlayerProfilePlayerData(String json) {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
 
-        boolean inGuild = true;
-
-        JsonObject guild = null, profile;
+        JsonObject profile;
 
         try {
-            profile = rootObject
-                    .getAsJsonObject("profile");
-            if(profile == null) {
+            if(rootObject.has("player")) {
+                profile = rootObject
+                        .getAsJsonObject("player");
+            } else {
                 return new PlayerProfile(
-                        null,
                         null,
                         null
                 );
@@ -82,53 +74,121 @@ public class HypixelAPIUtils {
             e.printStackTrace();
             return new PlayerProfile(
                     null,
-                    null,
                     null
             );
         }
 
-        try {
-            guild = rootObject
-                    .getAsJsonObject("guild");
-        } catch (Exception e) {
-            inGuild = false;
-            e.printStackTrace();
-        }
-
-        String displayName = rootObject.has("name")
-                ? rootObject.get("name").getAsString()
+        String displayName = profile.has("displayname")
+                ? profile.get("displayname").getAsString()
                 : null;
 
-        String guildTag = "";
-        if (inGuild) {
-            guildTag = guild.has("tag")
-                    ? guild.get("tag").getAsString()
-                    : "";
-        }
+        String newPackageRank = profile.has("newPackageRank")
+                ? profile.get("newPackageRank").getAsString()
+                : null;
 
-        String rank = profile.has("tag")
-                ? profile.get("tag").getAsString()
-                : "";
+        String rankPlusColor = profile.has("rankPlusColor")
+                ? profile.get("rankPlusColor").getAsString()
+                : null;
+
+        String monthlyPackageRank = profile.has("monthlyPackageRank")
+                ? profile.get("monthlyPackageRank").getAsString()
+                : null;
+
+        String monthlyRankColor = profile.has("monthlyRankColor")
+                ? profile.get("monthlyRankColor").getAsString()
+                : null;
+
+        String rank = profile.has("rank")
+                ? profile.get("rank").getAsString()
+                : null;
+
+        String prefix = profile.has("prefix")
+                ? profile.get("prefix").getAsString()
+                : null;
 
         return new PlayerProfile(
                 displayName,
-                rank,
-                guildTag
+                formatRank(displayName, newPackageRank, rankPlusColor, monthlyPackageRank, monthlyRankColor, rank, prefix)
         );
+    }
+
+    public static String formatRank(String displayName, String newPackageRank, String rankPlusColor, String monthlyPackageRank, String monthlyRankColor, String rank, String prefix) {
+        if(displayName.equals("Technoblade"))  return "§d[PIG§b+++§d]";
+        else if (displayName.equals("TommyInnit"))  return "§d[INNIT]";
+        else if (prefix != null && prefix.equals("§6[MOJANG]")) return "§6[MOJANG]";
+        else if (rank != null && rank.equals("STAFF")) return "§c[§6ዞ§c]";
+        else if (rank != null && rank.equals("YOUTUBER")) return "§c[§fYOUTUBE§c]";
+        else if (newPackageRank != null && newPackageRank.equals("MVP_PLUS") && rankPlusColor != null) {
+            String color;
+            switch (rankPlusColor) {
+                case "GOLD":
+                    color = "§6";
+                    break;
+                case "GREEN":
+                    color = "§a";
+                    break;
+                case "YELLOW":
+                    color = "§e";
+                    break;
+                case "LIGHT_PURPLE":
+                    color = "§d";
+                    break;
+                case "WHITE":
+                    color = "§f";
+                    break;
+                case "BLUE":
+                    color = "§9";
+                    break;
+                case "DARK_GREEN":
+                    color = "§2";
+                    break;
+                case "DARK_RED":
+                    color = "§4";
+                    break;
+                case "DARK_AQUA":
+                    color = "§3";
+                    break;
+                case "DARK_PURPLE":
+                    color = "§5";
+                    break;
+                case "DARK_GRAY":
+                    color = "§8";
+                    break;
+                case "BLACK":
+                    color = "§0";
+                    break;
+                case "DARK_BLUE":
+                    color = "§1";
+                    break;
+                default:
+                    color = "§c";
+                    break;
+            }
+            if (monthlyPackageRank != null && monthlyPackageRank.equals("SUPERSTAR")) {
+                if (monthlyRankColor != null && monthlyRankColor.equals("AQUA")) return "§b[MVP" + color + "++" + "§b]";
+                else return "§6[MVP" + color + "++" + "§6]";
+            } else {
+                return "§b[MVP" + color + "+" + "§b]";
+            }
+        } else if (newPackageRank != null && newPackageRank.equals("MVP_PLUS")) return "§b[MVP§c+§b]";
+        else if (newPackageRank != null && newPackageRank.equals("MVP")) return "§b[MVP]";
+        else if (newPackageRank != null && newPackageRank.equals("VIP_PLUS")) return "§a[VIP§6+§a]";
+        else if (newPackageRank != null && newPackageRank.equals("VIP")) return "§a[VIP]";
+        else return "§7";
     }
 
     public static Duels parseDuelsPlayerData(String json) {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
+//        saveRootObjectAsJson(rootObject); debugging stuff
 
         JsonObject duelsStats = null, profile = null;
 
         try {
-            if(rootObject.has("stats") && rootObject.getAsJsonObject("stats").has("Duels") && rootObject.has("profile")) {
-                duelsStats = rootObject
-                        .getAsJsonObject("stats")
-                        .getAsJsonObject("Duels");
-                profile = rootObject
-                        .getAsJsonObject("profile");
+            if(rootObject.has("player")
+                    && rootObject.get("player").getAsJsonObject().has("stats")
+                    && rootObject.get("player").getAsJsonObject().getAsJsonObject("stats").has("Duels")) {
+                profile = rootObject.get("player").getAsJsonObject();
+                duelsStats = profile.getAsJsonObject("stats").getAsJsonObject("Duels");
             } else {
                 return new Duels(
                         -1,
@@ -173,11 +233,10 @@ public class HypixelAPIUtils {
                 : (double) kills/deaths;
         wlr = (double) Math.round(wlr * 100) / 100;
         kdr = (double) Math.round(kdr * 100) / 100;
-        assert profile != null;
-        double level = profile.has("network_level")
-                ? profile.get("network_level").getAsDouble()
+        double level = profile.has("networkExp")
+                ? (double) Math.round(getExactLevel(profile.get("networkExp").getAsDouble()) * 100) / 100
                 : 0;
-        level = (double) Math.round(level * 100) / 100;
+
         String stringLevel = DuelsStatsCommand.levelColor(String.valueOf(level));
 
         return new Duels(
@@ -192,17 +251,65 @@ public class HypixelAPIUtils {
         );
     }
 
+    public static void saveJsonObject(JsonObject rootObject, String filename) {
+        Gson gson = new GsonBuilder()
+                .setPrettyPrinting()
+                .create();
+
+        try (FileWriter writer = new FileWriter(filename)) {
+            gson.toJson(rootObject, writer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static final double BASE = 10_000;
+    private static final double GROWTH = 2_500;
+
+    private static double getLevel(double exp) {
+        double REVERSE_PQ_PREFIX = -(BASE - 0.5 * GROWTH) / GROWTH;
+        double REVERSE_CONST = REVERSE_PQ_PREFIX * REVERSE_PQ_PREFIX;
+        double GROWTH_DIVIDES_2 = 2 / GROWTH;
+        return exp < 0 ? 1 : Math.floor(1 + REVERSE_PQ_PREFIX + Math.sqrt(REVERSE_CONST + GROWTH_DIVIDES_2 * exp));
+    }
+
+    private static double getExactLevel(double exp) {
+        return getLevel(exp) + getPercentageToNextLevel(exp);
+    }
+
+    private static double getTotalExpToFullLevel(double level) {
+        double HALF_GROWTH = 0.5 * GROWTH;
+        return (HALF_GROWTH * (level - 2) + BASE) * (level - 1);
+    }
+
+    private static double getTotalExpToLevel(double level) {
+        double lv = Math.floor(level), x0 = getTotalExpToFullLevel(lv);
+        if (level == lv) return x0;
+        return (getTotalExpToFullLevel(lv + 1) - x0) * (level % 1) + x0;
+    }
+
+    private static double getPercentageToNextLevel(double exp) {
+        double lv = getLevel(exp), x0 = getTotalExpToLevel(lv);
+        return (exp - x0) / (getTotalExpToLevel(lv + 1) - x0);
+    }
+
     public static Bedwars parseBedwarsPlayerData(String json) {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
+//        saveJsonObject(rootObject, "player-data.json"); debugging stuff
 
         JsonObject achievements = null;
         JsonObject bedwarsStats = null;
+
         try {
-            if(rootObject.has("achievements") && rootObject.has("stats") && rootObject.getAsJsonObject("stats").has("Bedwars")) {
+            if(rootObject.has("player")
+                    && rootObject.getAsJsonObject("player").has("achievements")
+                    && rootObject.getAsJsonObject("player").has("stats")
+                    && rootObject.getAsJsonObject("player").getAsJsonObject("stats").has("Bedwars")) {
                 bedwarsStats = rootObject
+                        .getAsJsonObject("player")
                         .getAsJsonObject("stats")
                         .getAsJsonObject("Bedwars");
-                achievements = rootObject.getAsJsonObject("achievements");
+                achievements = rootObject.getAsJsonObject("player").getAsJsonObject("achievements");
             } else {
                 return new Bedwars(
                         -1,
@@ -215,7 +322,6 @@ public class HypixelAPIUtils {
                         -1
                 );
             }
-
         } catch (Exception e) {
             UChat.chat("Something broke in parseBedwarsPlayerData!");
             e.printStackTrace();
@@ -226,6 +332,7 @@ public class HypixelAPIUtils {
                 ? achievements.get("bedwars_level").getAsInt()
                 : 0;
 
+        assert bedwarsStats != null;
         int finalKills = bedwarsStats.has("final_kills_bedwars")
                 ? bedwarsStats.get("final_kills_bedwars").getAsInt()
                 : 0;
@@ -271,4 +378,22 @@ public class HypixelAPIUtils {
             bblr
         );
     }
+
+//    debugging stuff
+//    public static void saveRootObjectAsJson(JsonObject rootObject) {
+//        Gson gson = new GsonBuilder()
+//                .setPrettyPrinting()
+//                .create();
+//
+//        String jsonOutput = gson.toJson(rootObject);
+//
+//        try {
+//            Files.write(
+//                    Paths.get("yt.json"),
+//                    jsonOutput.getBytes(StandardCharsets.UTF_8)
+//            );
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }

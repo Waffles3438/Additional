@@ -2,10 +2,8 @@ package me.waffles.addition.command;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.Multithreading;
-import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
-import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
 import me.waffles.addition.util.HypixelAPIUtils;
 import me.waffles.addition.Addition;
@@ -50,15 +48,13 @@ public class DuelsStatsCommand {
     private void fetchAndPrintStats(String Username, String uuid) {
 
         // fetch stats here
-        if(!Addition.duelsStatsList.containsKey(Username.toLowerCase()) ||
-                (Addition.playerProfileList.get(Username.toLowerCase()).getRank() == null
-                && Addition.playerProfileList.get(Username.toLowerCase()).getGuildTag() == null)) {
+        if(!Addition.duelsStatsList.containsKey(Username.toLowerCase())) {
             try {
                 Addition.duelsStatsList.put(Username.toLowerCase(), fetchPlayerDuelsStats(uuid));
                 Addition.playerProfileList.put(Username.toLowerCase(), fetchPlayerProfileData(uuid));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 UChat.chat("Something broke while fetching stats!");
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
         }
 
@@ -69,8 +65,7 @@ public class DuelsStatsCommand {
     private void printStats(String Username) {
         PlayerProfile profile = Addition.playerProfileList.get(Username.toLowerCase());
 
-        if((profile.getRank() == null && profile.getGuildTag() == null)
-                || profile.getDisplayName() == null) {
+        if(profile.getDisplayName() == null) {
             UChat.chat(Username + " has no Hypixel stats.");
             return;
         }
@@ -109,8 +104,8 @@ public class DuelsStatsCommand {
 
     public String fetchPlayerData(String uuid) {
         return HypixelAPIUtils.fetchPlayerData(
-                "https://nadeshiko.io/player/" + uuid + "/network",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                "http://api.abyssoverlay.com/player?uuid=" + uuid,
+                "node-ao/2.0.3"
         );
     }
 
@@ -120,6 +115,7 @@ public class DuelsStatsCommand {
         if (stjson == null || stjson.isEmpty()) {
             return null;
         }
+
         return HypixelAPIUtils.parsePlayerProfilePlayerData(stjson);
     }
 

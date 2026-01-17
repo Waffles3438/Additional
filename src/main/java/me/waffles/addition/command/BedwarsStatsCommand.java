@@ -49,9 +49,7 @@ public class BedwarsStatsCommand {
     private void fetchAndPrintStats(String Username, String uuid) {
 
         // fetch stats here
-        if(!Addition.bedwarsStatsList.containsKey(Username.toLowerCase()) ||
-                (Addition.playerProfileList.get(Username.toLowerCase()).getRank() == null
-                && Addition.playerProfileList.get(Username.toLowerCase()).getGuildTag() == null)) {
+        if(!Addition.bedwarsStatsList.containsKey(Username.toLowerCase())) {
             try {
                 Addition.bedwarsStatsList.put(Username.toLowerCase(), fetchPlayerBedwarsStats(uuid));
                 Addition.playerProfileList.put(Username.toLowerCase(), fetchPlayerProfileData(uuid));
@@ -68,8 +66,7 @@ public class BedwarsStatsCommand {
     private void printStats(String Username) {
         PlayerProfile profile = Addition.playerProfileList.get(Username.toLowerCase());
 
-        if((profile.getRank() == null && profile.getGuildTag() == null)
-        || profile.getDisplayName() == null) {
+        if(profile.getDisplayName() == null) {
             UChat.chat(Username + " has no Hypixel stats.");
             return;
         }
@@ -110,16 +107,14 @@ public class BedwarsStatsCommand {
         } else if (profile.getRank().equals("§7")) {
             formattedName = "§7" + formattedName;
         }
-        if(!profile.getGuildTag().isEmpty()) {
-            formattedName = formattedName + " " + profile.getGuildTag();
-        }
+
         return formattedName;
     }
 
     public String fetchPlayerData(String uuid) {
         return HypixelAPIUtils.fetchPlayerData(
-                "https://nadeshiko.io/player/" + uuid + "/network",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                "http://api.abyssoverlay.com/player?uuid=" + uuid,
+                "node-ao/2.0.3"
         );
     }
 
