@@ -13,9 +13,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 public class HypixelAPIUtils {
     public static String fetchPlayerData(String urlString, String userAgent) {

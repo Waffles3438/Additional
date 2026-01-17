@@ -11,7 +11,6 @@ import me.waffles.addition.util.Duels;
 import me.waffles.addition.util.PlayerProfile;
 import net.minecraft.client.Minecraft;
 
-import java.io.IOException;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
@@ -31,7 +30,6 @@ public class DuelsStatsCommand {
     @Main
     private void main(GameProfile player1) {
         Multithreading.runAsync(() -> {
-            String player = player1.getName();
             String Username, uuid;
             try {
                 uuid = player1.getId().toString();
@@ -109,8 +107,7 @@ public class DuelsStatsCommand {
         );
     }
 
-    public PlayerProfile fetchPlayerProfileData(String uuid)
-            throws IOException {
+    public PlayerProfile fetchPlayerProfileData(String uuid) {
         String stjson = fetchPlayerData(uuid);
         if (stjson == null || stjson.isEmpty()) {
             return null;
@@ -119,8 +116,7 @@ public class DuelsStatsCommand {
         return HypixelAPIUtils.parsePlayerProfilePlayerData(stjson);
     }
 
-    public Duels fetchPlayerDuelsStats(String uuid)
-            throws IOException {
+    public Duels fetchPlayerDuelsStats(String uuid) {
         String stjson = fetchPlayerData(uuid);
         if (stjson == null || stjson.isEmpty()) {
             return null;

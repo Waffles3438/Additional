@@ -2,10 +2,8 @@ package me.waffles.addition.command;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.Multithreading;
-import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
-import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
 import me.waffles.addition.Addition;
 import me.waffles.addition.util.Bedwars;
@@ -32,7 +30,6 @@ public class BedwarsStatsCommand {
     @Main
     private void main(GameProfile player1) {
         Multithreading.runAsync(() -> {
-            String player = player1.getName();
             String Username, uuid;
             try {
                 uuid = player1.getId().toString();
