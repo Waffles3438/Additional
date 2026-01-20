@@ -48,11 +48,11 @@ public class RenderMixin {
     public boolean isBot(Entity entity){
         if (entity.getUniqueID().version() == 2 ||
                 entity instanceof EntityPlayer &&
-                        (entity.getName().contains("[NPC]")
-                                || entity.getName().contains("[BOT]")
-                                || entity.getName() == null
-                                || entity.getName().contains("npc-")
-                                || (entity.getName().contains("§") && (entity.getName().contains("SHOP") || entity.getName().contains("UPGRADE"))))
+                        (entity.getName().contains("[NPC]") ||
+                                entity.getName().contains("[BOT]") ||
+                                entity.getName() == null ||
+                                entity.getName().contains("npc-") ||
+                                (entity.getName().contains("§") && (entity.getName().contains("SHOP") || entity.getName().contains("UPGRADE"))))
         ) {
             return true;
         } else {
