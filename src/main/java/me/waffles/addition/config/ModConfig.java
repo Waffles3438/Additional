@@ -78,15 +78,6 @@ public class ModConfig extends Config {
         Notifications.INSTANCE.send("Addition", "Cleared player cache", 3000);
     };
 
-    @Slider(
-            name = "Amount of players cached",
-            min = 1,
-            max = 32,
-            step = 1,
-            category = "Stat Checking"
-    )
-    public static int maxCacheSize = 16;
-
     public ModConfig() {
         super(new Mod(Addition.NAME, ModType.UTIL_QOL), Addition.MODID + ".json");
         initialize();
