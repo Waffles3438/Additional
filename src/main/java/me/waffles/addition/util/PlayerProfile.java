@@ -5,11 +5,11 @@ public class PlayerProfile {
 
     public PlayerProfile(String displayName, String rank, String guildTag) {
         this.rank = rank;
-        this.guildTag = guildTag;
         this.displayName = displayName;
+        this.guildTag = guildTag;
     }
 
     public String getDisplayName() { return displayName; }
     public String getRank() { return rank; }
-    public String getGuildTag() { return guildTag; }
+    public String getGuildTag() { return guildTag; };
 }

@@ -2,10 +2,8 @@ package me.waffles.addition.command;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.Multithreading;
-import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
-import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
 import me.waffles.addition.util.HypixelAPIUtils;
 import me.waffles.addition.Addition;
@@ -33,7 +31,6 @@ public class DuelsStatsCommand {
     @Main
     private void main(GameProfile player1) {
         Multithreading.runAsync(() -> {
-            String player = player1.getName();
             String Username, uuid;
             try {
                 uuid = player1.getId().toString();
@@ -50,15 +47,13 @@ public class DuelsStatsCommand {
     private void fetchAndPrintStats(String Username, String uuid) {
 
         // fetch stats here
-        if(!Addition.duelsStatsList.containsKey(Username.toLowerCase()) ||
-                (Addition.playerProfileList.get(Username.toLowerCase()).getRank() == null
-                && Addition.playerProfileList.get(Username.toLowerCase()).getGuildTag() == null)) {
+        if(!Addition.duelsStatsList.containsKey(Username.toLowerCase())) {
             try {
                 Addition.duelsStatsList.put(Username.toLowerCase(), fetchPlayerDuelsStats(uuid));
                 Addition.playerProfileList.put(Username.toLowerCase(), fetchPlayerProfileData(uuid));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 UChat.chat("Something broke while fetching stats!");
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
         }
 
@@ -69,8 +64,7 @@ public class DuelsStatsCommand {
     private void printStats(String Username) {
         PlayerProfile profile = Addition.playerProfileList.get(Username.toLowerCase());
 
-        if((profile.getRank() == null && profile.getGuildTag() == null)
-                || profile.getDisplayName() == null) {
+        if(profile.getDisplayName() == null) {
             UChat.chat(Username + " has no Hypixel stats.");
             return;
         }
@@ -84,17 +78,17 @@ public class DuelsStatsCommand {
         }
 
         formattedName = BedwarsStatsCommand.formateName(profile, formattedName);
+        String formattedGuildTag = profile.getGuildTag();
 
         int duelsbws = duelsStats.getDuelsBWS();
         int duelscws = duelsStats.getDuelsCWS();
         double duelskdr = duelsStats.getDuelsKDR();
         int duelskills = duelsStats.getDuelsKills();
-        // Duels
         int duelswins = duelsStats.getDuelsWins();
         double duelswlr = duelsStats.getDuelsWLR();
         String level = duelsStats.getLevel();
         UChat.chat("§9------------------------------------------");
-        UChat.chat(getPlayerDivision(duelswins) + formattedName);
+        UChat.chat(getPlayerDivision(duelswins) + formattedName + " " + formattedGuildTag);
         UChat.chat("Level: " + level);
         UChat.chat("WLR: " + formatColors(duelswlr, 10));
         UChat.chat("Wins: " + formatColors(duelswins, 20000));
@@ -109,22 +103,30 @@ public class DuelsStatsCommand {
 
     public String fetchPlayerData(String uuid) {
         return HypixelAPIUtils.fetchPlayerData(
-                "https://nadeshiko.io/player/" + uuid + "/network",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                "http://api.abyssoverlay.com/player?uuid=" + uuid,
+                "node-ao/2.0.3"
+        );
+    }
+
+    public String fetchPlayerGuildData(String uuid) {
+        return HypixelAPIUtils.fetchPlayerData(
+                "http://api.abyssoverlay.com/guild?uuid=" + uuid,
+                "node-ao/2.0.3"
         );
     }
 
     public PlayerProfile fetchPlayerProfileData(String uuid)
             throws IOException {
         String stjson = fetchPlayerData(uuid);
-        if (stjson == null || stjson.isEmpty()) {
+        String guild =  fetchPlayerGuildData(uuid);
+        if (stjson == null || stjson.isEmpty() || guild == null || guild.isEmpty()) {
             return null;
         }
-        return HypixelAPIUtils.parsePlayerProfilePlayerData(stjson);
+        return HypixelAPIUtils.parsePlayerProfilePlayerData(stjson, guild);
     }
 
-    public Duels fetchPlayerDuelsStats(String uuid)
-            throws IOException {
+
+    public Duels fetchPlayerDuelsStats(String uuid) {
         String stjson = fetchPlayerData(uuid);
         if (stjson == null || stjson.isEmpty()) {
             return null;

@@ -2,10 +2,8 @@ package me.waffles.addition.command;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.Multithreading;
-import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
-import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
 import me.waffles.addition.Addition;
 import me.waffles.addition.util.Bedwars;
@@ -32,7 +30,6 @@ public class BedwarsStatsCommand {
     @Main
     private void main(GameProfile player1) {
         Multithreading.runAsync(() -> {
-            String player = player1.getName();
             String Username, uuid;
             try {
                 uuid = player1.getId().toString();
@@ -49,9 +46,7 @@ public class BedwarsStatsCommand {
     private void fetchAndPrintStats(String Username, String uuid) {
 
         // fetch stats here
-        if(!Addition.bedwarsStatsList.containsKey(Username.toLowerCase()) ||
-                (Addition.playerProfileList.get(Username.toLowerCase()).getRank() == null
-                && Addition.playerProfileList.get(Username.toLowerCase()).getGuildTag() == null)) {
+        if(!Addition.bedwarsStatsList.containsKey(Username.toLowerCase())) {
             try {
                 Addition.bedwarsStatsList.put(Username.toLowerCase(), fetchPlayerBedwarsStats(uuid));
                 Addition.playerProfileList.put(Username.toLowerCase(), fetchPlayerProfileData(uuid));
@@ -68,8 +63,7 @@ public class BedwarsStatsCommand {
     private void printStats(String Username) {
         PlayerProfile profile = Addition.playerProfileList.get(Username.toLowerCase());
 
-        if((profile.getRank() == null && profile.getGuildTag() == null)
-        || profile.getDisplayName() == null) {
+        if(profile.getDisplayName() == null) {
             UChat.chat(Username + " has no Hypixel stats.");
             return;
         }
@@ -84,6 +78,7 @@ public class BedwarsStatsCommand {
         }
 
         formattedName = formateName(profile, formattedName);
+        String formattedGuildTag = profile.getGuildTag();
 
         int bedwarsfk = bedwarsStats.getBedwarsFinalKills();
         int bedwarsbb = bedwarsStats.getBedwarsBedBreaks();
@@ -93,7 +88,7 @@ public class BedwarsStatsCommand {
         double bedwarswlr = bedwarsStats.getBedwarsWLR();
         double bedwarsbblr = bedwarsStats.getBedwarsBBLR();
         UChat.chat("§9------------------------------------------");
-        UChat.chat(getFormattedRank(bedwarsstar) + " " + formattedName);
+        UChat.chat(getFormattedRank(bedwarsstar) + " " + formattedName + " " + formattedGuildTag);
         UChat.chat("FKDR: " + formatColors(bedwarsfkdr, 15));
         UChat.chat("Final kills: " + formatColors(bedwarsfk, 25000));
         UChat.chat("WLR: " + formatColors(bedwarswlr, 5));
@@ -110,26 +105,32 @@ public class BedwarsStatsCommand {
         } else if (profile.getRank().equals("§7")) {
             formattedName = "§7" + formattedName;
         }
-        if(!profile.getGuildTag().isEmpty()) {
-            formattedName = formattedName + " " + profile.getGuildTag();
-        }
+
         return formattedName;
     }
 
     public String fetchPlayerData(String uuid) {
         return HypixelAPIUtils.fetchPlayerData(
-                "https://nadeshiko.io/player/" + uuid + "/network",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                "http://api.abyssoverlay.com/player?uuid=" + uuid,
+                "node-ao/2.0.3"
+        );
+    }
+
+    public String fetchPlayerGuildData(String uuid) {
+        return HypixelAPIUtils.fetchPlayerData(
+                "http://api.abyssoverlay.com/guild?uuid=" + uuid,
+                "node-ao/2.0.3"
         );
     }
 
     public PlayerProfile fetchPlayerProfileData(String uuid)
             throws IOException {
         String stjson = fetchPlayerData(uuid);
-        if (stjson == null || stjson.isEmpty()) {
+        String guild =  fetchPlayerGuildData(uuid);
+        if (stjson == null || stjson.isEmpty() || guild == null || guild.isEmpty()) {
             return null;
         }
-        return HypixelAPIUtils.parsePlayerProfilePlayerData(stjson);
+        return HypixelAPIUtils.parsePlayerProfilePlayerData(stjson, guild);
     }
 
     public Bedwars fetchPlayerBedwarsStats(String uuid)
