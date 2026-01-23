@@ -78,6 +78,7 @@ public class BedwarsStatsCommand {
         }
 
         formattedName = formateName(profile, formattedName);
+        String formattedGuildTag = profile.getGuildTag();
 
         int bedwarsfk = bedwarsStats.getBedwarsFinalKills();
         int bedwarsbb = bedwarsStats.getBedwarsBedBreaks();
@@ -87,7 +88,7 @@ public class BedwarsStatsCommand {
         double bedwarswlr = bedwarsStats.getBedwarsWLR();
         double bedwarsbblr = bedwarsStats.getBedwarsBBLR();
         UChat.chat("§9------------------------------------------");
-        UChat.chat(getFormattedRank(bedwarsstar) + " " + formattedName);
+        UChat.chat(getFormattedRank(bedwarsstar) + " " + formattedName + " " + formattedGuildTag);
         UChat.chat("FKDR: " + formatColors(bedwarsfkdr, 15));
         UChat.chat("Final kills: " + formatColors(bedwarsfk, 25000));
         UChat.chat("WLR: " + formatColors(bedwarswlr, 5));
@@ -115,13 +116,21 @@ public class BedwarsStatsCommand {
         );
     }
 
+    public String fetchPlayerGuildData(String uuid) {
+        return HypixelAPIUtils.fetchPlayerData(
+                "http://api.abyssoverlay.com/guild?uuid=" + uuid,
+                "node-ao/2.0.3"
+        );
+    }
+
     public PlayerProfile fetchPlayerProfileData(String uuid)
             throws IOException {
         String stjson = fetchPlayerData(uuid);
-        if (stjson == null || stjson.isEmpty()) {
+        String guild =  fetchPlayerGuildData(uuid);
+        if (stjson == null || stjson.isEmpty() || guild == null || guild.isEmpty()) {
             return null;
         }
-        return HypixelAPIUtils.parsePlayerProfilePlayerData(stjson);
+        return HypixelAPIUtils.parsePlayerProfilePlayerData(stjson, guild);
     }
 
     public Bedwars fetchPlayerBedwarsStats(String uuid)

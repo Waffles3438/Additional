@@ -51,8 +51,9 @@ public class HypixelAPIUtils {
         return "";
     }
 
-    public static PlayerProfile parsePlayerProfilePlayerData(String json) {
+    public static PlayerProfile parsePlayerProfilePlayerData(String json, String guild) {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
+        JsonObject guildObject = new JsonParser().parse(guild).getAsJsonObject();
 
         JsonObject profile;
 
@@ -63,6 +64,7 @@ public class HypixelAPIUtils {
             } else {
                 return new PlayerProfile(
                         null,
+                        null,
                         null
                 );
             }
@@ -71,9 +73,18 @@ public class HypixelAPIUtils {
             e.printStackTrace();
             return new PlayerProfile(
                     null,
+                    null,
                     null
             );
         }
+
+        String tag = guildObject.has("tag")
+                ? guildObject.get("tag").getAsString()
+                : null;
+
+        String tagColor = guildObject.has("tagColor")
+                ? guildObject.get("tagColor").getAsString()
+                : null;
 
         String displayName = profile.has("displayname")
                 ? profile.get("displayname").getAsString()
@@ -105,8 +116,30 @@ public class HypixelAPIUtils {
 
         return new PlayerProfile(
                 displayName,
-                formatRank(displayName, newPackageRank, rankPlusColor, monthlyPackageRank, monthlyRankColor, rank, prefix)
+                formatRank(displayName, newPackageRank, rankPlusColor, monthlyPackageRank, monthlyRankColor, rank, prefix),
+                formatGuildTag(tag, tagColor)
         );
+    }
+
+    public static String formatGuildTag(String tag, String tagColor) {
+        if(tag == null) {
+            return "";
+        }
+        if (tagColor == null) {
+            return "§7[" + tag + "]";
+        }
+        switch (tagColor) {
+            case "DARK_AQUA":
+                return "§3[" + tag + "]";
+            case "DARK_GREEN":
+                return "§2[" + tag + "]";
+            case "YELLOW":
+                return "§e[" + tag + "]";
+            case "GOLD":
+                return "§6[" + tag + "]";
+            default:
+                return "§7[" + tag + "]";
+        }
     }
 
     public static String formatRank(String displayName, String newPackageRank, String rankPlusColor, String monthlyPackageRank, String monthlyRankColor, String rank, String prefix) {

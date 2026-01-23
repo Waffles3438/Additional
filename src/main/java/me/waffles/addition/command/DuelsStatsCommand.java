@@ -11,6 +11,7 @@ import me.waffles.addition.util.Duels;
 import me.waffles.addition.util.PlayerProfile;
 import net.minecraft.client.Minecraft;
 
+import java.io.IOException;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
@@ -77,17 +78,17 @@ public class DuelsStatsCommand {
         }
 
         formattedName = BedwarsStatsCommand.formateName(profile, formattedName);
+        String formattedGuildTag = profile.getGuildTag();
 
         int duelsbws = duelsStats.getDuelsBWS();
         int duelscws = duelsStats.getDuelsCWS();
         double duelskdr = duelsStats.getDuelsKDR();
         int duelskills = duelsStats.getDuelsKills();
-        // Duels
         int duelswins = duelsStats.getDuelsWins();
         double duelswlr = duelsStats.getDuelsWLR();
         String level = duelsStats.getLevel();
         UChat.chat("§9------------------------------------------");
-        UChat.chat(getPlayerDivision(duelswins) + formattedName);
+        UChat.chat(getPlayerDivision(duelswins) + formattedName + " " + formattedGuildTag);
         UChat.chat("Level: " + level);
         UChat.chat("WLR: " + formatColors(duelswlr, 10));
         UChat.chat("Wins: " + formatColors(duelswins, 20000));
@@ -107,14 +108,23 @@ public class DuelsStatsCommand {
         );
     }
 
-    public PlayerProfile fetchPlayerProfileData(String uuid) {
+    public String fetchPlayerGuildData(String uuid) {
+        return HypixelAPIUtils.fetchPlayerData(
+                "http://api.abyssoverlay.com/guild?uuid=" + uuid,
+                "node-ao/2.0.3"
+        );
+    }
+
+    public PlayerProfile fetchPlayerProfileData(String uuid)
+            throws IOException {
         String stjson = fetchPlayerData(uuid);
-        if (stjson == null || stjson.isEmpty()) {
+        String guild =  fetchPlayerGuildData(uuid);
+        if (stjson == null || stjson.isEmpty() || guild == null || guild.isEmpty()) {
             return null;
         }
-
-        return HypixelAPIUtils.parsePlayerProfilePlayerData(stjson);
+        return HypixelAPIUtils.parsePlayerProfilePlayerData(stjson, guild);
     }
+
 
     public Duels fetchPlayerDuelsStats(String uuid) {
         String stjson = fetchPlayerData(uuid);
