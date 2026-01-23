@@ -1,23 +1,23 @@
-package me.waffles.addition;
+package me.waffles.additional;
 
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import me.waffles.addition.command.BedwarsStatsCommand;
-import me.waffles.addition.command.DuelsStatsCommand;
-import me.waffles.addition.config.ModConfig;
+import me.waffles.additional.command.BedwarsStatsCommand;
+import me.waffles.additional.command.DuelsStatsCommand;
+import me.waffles.additional.config.ModConfig;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import me.waffles.addition.mixin.EntityLivingBaseAccessor;
-import me.waffles.addition.util.Bedwars;
-import me.waffles.addition.util.Duels;
-import me.waffles.addition.util.EldestRemovalMap;
-import me.waffles.addition.util.PlayerProfile;
+import me.waffles.additional.mixin.EntityLivingBaseAccessor;
+import me.waffles.additional.util.Bedwars;
+import me.waffles.additional.util.Duels;
+import me.waffles.additional.util.EldestRemovalMap;
+import me.waffles.additional.util.PlayerProfile;
 
-@Mod(modid = Addition.MODID, name = Addition.NAME, version = Addition.VERSION)
-public class Addition {
+@Mod(modid = Additional.MODID, name = Additional.NAME, version = Additional.VERSION)
+public class Additional {
 
     public static final String MODID = "@ID@";
     public static final String NAME = "@NAME@";

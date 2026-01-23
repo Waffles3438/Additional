@@ -1,4 +1,4 @@
-package me.waffles.addition.util;
+package me.waffles.additional.util;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

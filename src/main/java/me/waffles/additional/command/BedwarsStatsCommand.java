@@ -1,14 +1,14 @@
-package me.waffles.addition.command;
+package me.waffles.additional.command;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.Multithreading;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import com.mojang.authlib.GameProfile;
-import me.waffles.addition.Addition;
-import me.waffles.addition.util.Bedwars;
-import me.waffles.addition.util.HypixelAPIUtils;
-import me.waffles.addition.util.PlayerProfile;
+import me.waffles.additional.Additional;
+import me.waffles.additional.util.Bedwars;
+import me.waffles.additional.util.HypixelAPIUtils;
+import me.waffles.additional.util.PlayerProfile;
 import net.minecraft.client.Minecraft;
 
 import java.io.IOException;
@@ -46,10 +46,10 @@ public class BedwarsStatsCommand {
     private void fetchAndPrintStats(String Username, String uuid) {
 
         // fetch stats here
-        if(!Addition.bedwarsStatsList.containsKey(Username.toLowerCase())) {
+        if(!Additional.bedwarsStatsList.containsKey(Username.toLowerCase())) {
             try {
-                Addition.bedwarsStatsList.put(Username.toLowerCase(), fetchPlayerBedwarsStats(uuid));
-                Addition.playerProfileList.put(Username.toLowerCase(), fetchPlayerProfileData(uuid));
+                Additional.bedwarsStatsList.put(Username.toLowerCase(), fetchPlayerBedwarsStats(uuid));
+                Additional.playerProfileList.put(Username.toLowerCase(), fetchPlayerProfileData(uuid));
             } catch (IOException e) {
                 UChat.chat("Something broke while fetching stats!");
                 throw new RuntimeException(e);
@@ -61,7 +61,7 @@ public class BedwarsStatsCommand {
     }
 
     private void printStats(String Username) {
-        PlayerProfile profile = Addition.playerProfileList.get(Username.toLowerCase());
+        PlayerProfile profile = Additional.playerProfileList.get(Username.toLowerCase());
 
         if(profile.getDisplayName() == null) {
             UChat.chat(Username + " has no Hypixel stats.");
@@ -69,7 +69,7 @@ public class BedwarsStatsCommand {
         }
         String formattedName = profile.getDisplayName();
 
-        Bedwars bedwarsStats = Addition.bedwarsStatsList.get(Username.toLowerCase());
+        Bedwars bedwarsStats = Additional.bedwarsStatsList.get(Username.toLowerCase());
 
         int bedwarsstar = bedwarsStats.getBedwarsStar();
         if (bedwarsstar == -1) {

@@ -1,11 +1,11 @@
-package me.waffles.addition.util;
+package me.waffles.additional.util;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import me.waffles.addition.command.DuelsStatsCommand;
+import me.waffles.additional.command.DuelsStatsCommand;
 
 import java.io.BufferedReader;
 import java.io.FileWriter;
