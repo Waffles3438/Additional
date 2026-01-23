@@ -4,7 +4,7 @@ import cc.polyfrost.oneconfig.config.annotations.*;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.utils.Notifications;
-import me.waffles.additional.Addition;
+import me.waffles.additional.Additional;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
@@ -72,14 +72,14 @@ public class ModConfig extends Config {
             category = "Stat Checking"
     )
     Runnable runnable = () -> {
-        Addition.bedwarsStatsList.clear();
-        Addition.duelsStatsList.clear();
-        Addition.playerProfileList.clear();
-        Notifications.INSTANCE.send("Addition", "Cleared player cache", 3000);
+        Additional.bedwarsStatsList.clear();
+        Additional.duelsStatsList.clear();
+        Additional.playerProfileList.clear();
+        Notifications.INSTANCE.send("Additional", "Cleared player cache", 3000);
     };
 
     public ModConfig() {
-        super(new Mod(Addition.NAME, ModType.UTIL_QOL), Addition.MODID + ".json");
+        super(new Mod(Additional.NAME, ModType.UTIL_QOL), Additional.MODID + ".json");
         initialize();
         addDependency("jumpTicks", "ndj");
         addDependency("nametagsOnShift", "masterSwitch");

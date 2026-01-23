@@ -5,8 +5,8 @@ import cc.polyfrost.oneconfig.utils.Multithreading;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import com.mojang.authlib.GameProfile;
+import me.waffles.additional.Additional;
 import me.waffles.additional.util.HypixelAPIUtils;
-import me.waffles.additional.Addition;
 import me.waffles.additional.util.Duels;
 import me.waffles.additional.util.PlayerProfile;
 import net.minecraft.client.Minecraft;
@@ -47,10 +47,10 @@ public class DuelsStatsCommand {
     private void fetchAndPrintStats(String Username, String uuid) {
 
         // fetch stats here
-        if(!Addition.duelsStatsList.containsKey(Username.toLowerCase())) {
+        if(!Additional.duelsStatsList.containsKey(Username.toLowerCase())) {
             try {
-                Addition.duelsStatsList.put(Username.toLowerCase(), fetchPlayerDuelsStats(uuid));
-                Addition.playerProfileList.put(Username.toLowerCase(), fetchPlayerProfileData(uuid));
+                Additional.duelsStatsList.put(Username.toLowerCase(), fetchPlayerDuelsStats(uuid));
+                Additional.playerProfileList.put(Username.toLowerCase(), fetchPlayerProfileData(uuid));
             } catch (Exception e) {
                 UChat.chat("Something broke while fetching stats!");
                 e.printStackTrace();
@@ -62,7 +62,7 @@ public class DuelsStatsCommand {
     }
 
     private void printStats(String Username) {
-        PlayerProfile profile = Addition.playerProfileList.get(Username.toLowerCase());
+        PlayerProfile profile = Additional.playerProfileList.get(Username.toLowerCase());
 
         if(profile.getDisplayName() == null) {
             UChat.chat(Username + " has no Hypixel stats.");
@@ -70,7 +70,7 @@ public class DuelsStatsCommand {
         }
         String formattedName = profile.getDisplayName();
 
-        Duels duelsStats = Addition.duelsStatsList.get(Username.toLowerCase());
+        Duels duelsStats = Additional.duelsStatsList.get(Username.toLowerCase());
         int duelsdeaths = duelsStats.getDuelsDeaths();
         if(duelsdeaths == -1) {
             UChat.chat(Username + " has never played Duels.");

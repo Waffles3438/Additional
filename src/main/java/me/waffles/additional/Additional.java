@@ -16,8 +16,8 @@ import me.waffles.additional.util.Duels;
 import me.waffles.additional.util.EldestRemovalMap;
 import me.waffles.additional.util.PlayerProfile;
 
-@Mod(modid = Addition.MODID, name = Addition.NAME, version = Addition.VERSION)
-public class Addition {
+@Mod(modid = Additional.MODID, name = Additional.NAME, version = Additional.VERSION)
+public class Additional {
 
     public static final String MODID = "@ID@";
     public static final String NAME = "@NAME@";
