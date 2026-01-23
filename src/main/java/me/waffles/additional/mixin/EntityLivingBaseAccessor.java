@@ -1,4 +1,4 @@
-package me.waffles.addition.mixin;
+package me.waffles.additional.mixin;
 
 import net.minecraft.entity.EntityLivingBase;
 import org.spongepowered.asm.mixin.Mixin;

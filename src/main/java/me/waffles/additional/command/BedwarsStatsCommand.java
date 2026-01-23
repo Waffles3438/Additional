@@ -1,14 +1,14 @@
-package me.waffles.addition.command;
+package me.waffles.additional.command;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.Multithreading;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import com.mojang.authlib.GameProfile;
-import me.waffles.addition.Addition;
-import me.waffles.addition.util.Bedwars;
-import me.waffles.addition.util.HypixelAPIUtils;
-import me.waffles.addition.util.PlayerProfile;
+import me.waffles.additional.Addition;
+import me.waffles.additional.util.Bedwars;
+import me.waffles.additional.util.HypixelAPIUtils;
+import me.waffles.additional.util.PlayerProfile;
 import net.minecraft.client.Minecraft;
 
 import java.io.IOException;

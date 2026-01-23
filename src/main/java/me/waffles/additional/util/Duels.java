@@ -1,4 +1,4 @@
-package me.waffles.addition.util;
+package me.waffles.additional.util;
 
 public class Duels {
     private final int Duelswins;
