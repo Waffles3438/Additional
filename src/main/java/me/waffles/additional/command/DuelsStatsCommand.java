@@ -49,8 +49,8 @@ public class DuelsStatsCommand {
         // fetch stats here
         if(!Additional.duelsStatsList.containsKey(Username.toLowerCase())) {
             try {
-                Additional.duelsStatsList.put(Username.toLowerCase(), fetchPlayerDuelsStats(uuid));
                 Additional.playerProfileList.put(Username.toLowerCase(), fetchPlayerProfileData(uuid));
+                Additional.duelsStatsList.put(Username.toLowerCase(), fetchPlayerDuelsStats(uuid));
             } catch (Exception e) {
                 UChat.chat("Something broke while fetching stats!");
                 e.printStackTrace();
@@ -64,7 +64,10 @@ public class DuelsStatsCommand {
     private void printStats(String Username) {
         PlayerProfile profile = Additional.playerProfileList.get(Username.toLowerCase());
 
-        if(profile.getDisplayName() == null) {
+        if(profile == null) {
+            UChat.chat("Invalid player");
+            return;
+        } else if(profile.getDisplayName() == null) {
             UChat.chat(Username + " has no Hypixel stats.");
             return;
         }

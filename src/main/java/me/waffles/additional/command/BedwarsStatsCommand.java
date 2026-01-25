@@ -48,10 +48,11 @@ public class BedwarsStatsCommand {
         // fetch stats here
         if(!Additional.bedwarsStatsList.containsKey(Username.toLowerCase())) {
             try {
-                Additional.bedwarsStatsList.put(Username.toLowerCase(), fetchPlayerBedwarsStats(uuid));
                 Additional.playerProfileList.put(Username.toLowerCase(), fetchPlayerProfileData(uuid));
+                Additional.bedwarsStatsList.put(Username.toLowerCase(), fetchPlayerBedwarsStats(uuid));
             } catch (IOException e) {
                 UChat.chat("Something broke while fetching stats!");
+                e.printStackTrace();
                 throw new RuntimeException(e);
             }
         }
@@ -63,7 +64,10 @@ public class BedwarsStatsCommand {
     private void printStats(String Username) {
         PlayerProfile profile = Additional.playerProfileList.get(Username.toLowerCase());
 
-        if(profile.getDisplayName() == null) {
+        if(profile == null) {
+            UChat.chat("Invalid player");
+            return;
+        } else if(profile.getDisplayName() == null) {
             UChat.chat(Username + " has no Hypixel stats.");
             return;
         }

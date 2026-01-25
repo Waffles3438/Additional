@@ -1,15 +1,11 @@
 package me.waffles.additional.util;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.waffles.additional.command.DuelsStatsCommand;
 
 import java.io.BufferedReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -53,6 +49,9 @@ public class HypixelAPIUtils {
 
     public static PlayerProfile parsePlayerProfilePlayerData(String json, String guild) {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
+
+//        saveJsonObject(rootObject, "blank"); // debugging stuff
+
         JsonObject guildObject = new JsonParser().parse(guild).getAsJsonObject();
 
         JsonObject profile;
@@ -209,7 +208,6 @@ public class HypixelAPIUtils {
 
     public static Duels parseDuelsPlayerData(String json) {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
-//        saveRootObjectAsJson(rootObject); debugging stuff
 
         JsonObject duelsStats = null, profile = null;
 
@@ -281,17 +279,22 @@ public class HypixelAPIUtils {
         );
     }
 
-    public static void saveJsonObject(JsonObject rootObject, String filename) {
-        Gson gson = new GsonBuilder()
-                .setPrettyPrinting()
-                .create();
-
-        try (FileWriter writer = new FileWriter(filename)) {
-            gson.toJson(rootObject, writer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+//    public static void saveJsonObject(JsonObject jsonObject, String filePath)
+//            throws IOException {
+//
+//        Gson gson = new GsonBuilder()
+//                .setPrettyPrinting()
+//                .create();
+//
+//        String formattedJson = gson.toJson(jsonObject);
+//
+//        Path path = Paths.get(filePath);
+//        if (path.getParent() != null) {
+//            Files.createDirectories(path.getParent());
+//        }
+//
+//        Files.write(path, formattedJson.getBytes(StandardCharsets.UTF_8));
+//    }
 
     private static final double BASE = 10_000;
     private static final double GROWTH = 2_500;
