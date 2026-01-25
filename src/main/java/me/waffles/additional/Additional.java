@@ -23,9 +23,10 @@ public class Additional {
     public static final String NAME = "@NAME@";
     public static final String VERSION = "@VER@";
     public static ModConfig config;
-    public static EldestRemovalMap<String, Duels> duelsStatsList = new EldestRemovalMap<>(ModConfig.maxCacheSize);
-    public static EldestRemovalMap<String, Bedwars> bedwarsStatsList = new EldestRemovalMap<>(ModConfig.maxCacheSize);
-    public static EldestRemovalMap<String, PlayerProfile> playerProfileList = new EldestRemovalMap<>(ModConfig.maxCacheSize);
+    public static int maxSize = 16;
+    public static EldestRemovalMap<String, Duels> duelsStatsList = new EldestRemovalMap<>(maxSize);
+    public static EldestRemovalMap<String, Bedwars> bedwarsStatsList = new EldestRemovalMap<>(maxSize);
+    public static EldestRemovalMap<String, PlayerProfile> playerProfileList = new EldestRemovalMap<>(maxSize);
 
     @Mod.EventHandler
     public void onInit(FMLInitializationEvent event) {
