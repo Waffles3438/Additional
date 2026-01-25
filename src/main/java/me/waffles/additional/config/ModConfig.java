@@ -2,6 +2,7 @@ package me.waffles.additional.config;
 
 import cc.polyfrost.oneconfig.config.annotations.*;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
+import cc.polyfrost.oneconfig.config.data.InfoType;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.utils.Notifications;
 import me.waffles.additional.Additional;
@@ -77,6 +78,24 @@ public class ModConfig extends Config {
         Additional.playerProfileList.clear();
         Notifications.INSTANCE.send("Additional", "Cleared player cache", 3000);
     };
+
+    @Slider(
+            name = "Amount of players cached",
+            min = 1,
+            max = 16,
+            step = 1,
+            category = "Stat Checking"
+    )
+    public static int maxCacheSize = 4;
+
+    @Info(
+            text = "Restart Minecraft to apply changes",
+            type = InfoType.INFO,
+            category = "Stat Checking",
+            size = OptionSize.DUAL
+    )
+    public static boolean ignored2; // Useless. Java limitations with @annotation.
+
 
     public ModConfig() {
         super(new Mod(Additional.NAME, ModType.UTIL_QOL), Additional.MODID + ".json");
