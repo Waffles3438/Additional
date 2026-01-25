@@ -23,15 +23,17 @@ public class Additional {
     public static final String NAME = "@NAME@";
     public static final String VERSION = "@VER@";
     public static ModConfig config;
-    public static int maxSize = 16;
-    public static EldestRemovalMap<String, Duels> duelsStatsList = new EldestRemovalMap<>(maxSize);
-    public static EldestRemovalMap<String, Bedwars> bedwarsStatsList = new EldestRemovalMap<>(maxSize);
-    public static EldestRemovalMap<String, PlayerProfile> playerProfileList = new EldestRemovalMap<>(maxSize);
+    public static EldestRemovalMap<String, Duels> duelsStatsList;
+    public static EldestRemovalMap<String, Bedwars> bedwarsStatsList;
+    public static EldestRemovalMap<String, PlayerProfile> playerProfileList;
 
     @Mod.EventHandler
     public void onInit(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(this);
         config = new ModConfig();
+        duelsStatsList = new EldestRemovalMap<>(ModConfig.maxCacheSize);
+        bedwarsStatsList = new EldestRemovalMap<>(ModConfig.maxCacheSize);
+        playerProfileList = new EldestRemovalMap<>(ModConfig.maxCacheSize);
         CommandManager.INSTANCE.registerCommand(new BedwarsStatsCommand());
         CommandManager.INSTANCE.registerCommand(new DuelsStatsCommand());
     }
