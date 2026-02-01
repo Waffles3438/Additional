@@ -1,6 +1,7 @@
 package me.waffles.additional.util;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.waffles.additional.command.DuelsStatsCommand;
@@ -9,6 +10,15 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+// debugging imports
+//import java.nio.charset.StandardCharsets;
+//import java.nio.file.Files;
+//import java.nio.file.Path;
+//import java.nio.file.Paths;
+//import com.google.gson.Gson;
+//import com.google.gson.GsonBuilder;
+//import java.io.IOException;
 
 public class HypixelAPIUtils {
     public static String fetchPlayerData(String urlString, String userAgent) {
@@ -49,15 +59,14 @@ public class HypixelAPIUtils {
 
     public static PlayerProfile parsePlayerProfilePlayerData(String json, String guild) {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
-
-//        saveJsonObject(rootObject, "blank"); // debugging stuff
-
         JsonObject guildObject = new JsonParser().parse(guild).getAsJsonObject();
+
+//        saveJsonObject(guildObject, "blank"); // debugging stuff
 
         JsonObject profile;
 
         try {
-            if(rootObject.has("player")) {
+            if(!rootObject.get("player").isJsonNull()) {
                 profile = rootObject
                         .getAsJsonObject("player");
             } else {
@@ -142,6 +151,7 @@ public class HypixelAPIUtils {
     }
 
     public static String formatRank(String displayName, String newPackageRank, String rankPlusColor, String monthlyPackageRank, String monthlyRankColor, String rank, String prefix) {
+        if (displayName == null) return null;
         if(displayName.equals("Technoblade"))  return "§d[PIG§b+++§d]";
         else if (displayName.equals("TommyInnit"))  return "§d[INNIT]";
         else if (prefix != null && prefix.equals("§6[MOJANG]")) return "§6[MOJANG]";
@@ -208,11 +218,10 @@ public class HypixelAPIUtils {
 
     public static Duels parseDuelsPlayerData(String json) {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
-
         JsonObject duelsStats = null, profile = null;
 
         try {
-            if(rootObject.has("player")
+            if(!rootObject.get("player").isJsonNull()
                     && rootObject.get("player").getAsJsonObject().has("stats")
                     && rootObject.get("player").getAsJsonObject().getAsJsonObject("stats").has("Duels")) {
                 profile = rootObject.get("player").getAsJsonObject();
@@ -232,6 +241,16 @@ public class HypixelAPIUtils {
         } catch (Exception e) {
             UChat.chat("Something broke in parseDuelsPlayerData!");
             e.printStackTrace();
+            return new Duels(
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    null
+            );
         }
 
         assert duelsStats != null;
@@ -334,7 +353,7 @@ public class HypixelAPIUtils {
         JsonObject bedwarsStats = null;
 
         try {
-            if(rootObject.has("player")
+            if(!rootObject.get("player").isJsonNull()
                     && rootObject.getAsJsonObject("player").has("achievements")
                     && rootObject.getAsJsonObject("player").has("stats")
                     && rootObject.getAsJsonObject("player").getAsJsonObject("stats").has("Bedwars")) {
@@ -358,6 +377,16 @@ public class HypixelAPIUtils {
         } catch (Exception e) {
             UChat.chat("Something broke in parseBedwarsPlayerData!");
             e.printStackTrace();
+            return new Bedwars(
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1
+            );
         }
 
         assert achievements != null;

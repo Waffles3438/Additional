@@ -11,9 +11,11 @@ import me.waffles.additional.util.Duels;
 import me.waffles.additional.util.PlayerProfile;
 import net.minecraft.client.Minecraft;
 
-import java.io.IOException;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+
+// debugging
+//import java.io.IOException;
 
 @Command(value = "d")
 public class DuelsStatsCommand {
@@ -118,8 +120,7 @@ public class DuelsStatsCommand {
         );
     }
 
-    public PlayerProfile fetchPlayerProfileData(String uuid)
-            throws IOException {
+    public PlayerProfile fetchPlayerProfileData(String uuid) {
         String stjson = fetchPlayerData(uuid);
         String guild =  fetchPlayerGuildData(uuid);
         if (stjson == null || stjson.isEmpty() || guild == null || guild.isEmpty()) {
