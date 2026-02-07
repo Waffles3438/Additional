@@ -218,7 +218,7 @@ public class HypixelAPIUtils {
 
     public static Duels parseDuelsPlayerData(String json) {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
-        JsonObject duelsStats = null, profile = null;
+        JsonObject duelsStats, profile;
 
         try {
             if(!rootObject.get("player").isJsonNull()
@@ -349,8 +349,8 @@ public class HypixelAPIUtils {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
 //        saveJsonObject(rootObject, "player-data.json"); debugging stuff
 
-        JsonObject achievements = null;
-        JsonObject bedwarsStats = null;
+        JsonObject achievements;
+        JsonObject bedwarsStats;
 
         try {
             if(!rootObject.get("player").isJsonNull()
