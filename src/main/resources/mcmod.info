@@ -1,18 +1,11 @@
 [
   {
-    "modid": "${id}",
-    "name": "${name}",
-    "description": "",
-    "version": "${version}",
-    "mcversion": "${mcVersionStr}",
-    "url": "",
-    "updateUrl": "",
+    "modid": "${mod_id}",
+    "name": "${mod_name}",
+    "version": "${mod_version}",
+    "mcversion": "${mc_version}",
     "authorList": [
       "iAT3"
-    ],
-    "credits": "",
-    "logoFile": "",
-    "screenshots": [],
-    "dependencies": []
+    ]
   }
 ]
