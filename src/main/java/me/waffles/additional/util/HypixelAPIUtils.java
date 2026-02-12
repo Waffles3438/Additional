@@ -1,18 +1,24 @@
 package me.waffles.additional.util;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.waffles.additional.command.DuelsStatsCommand;
 
 import java.io.BufferedReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+// debugging imports
+//import java.nio.charset.StandardCharsets;
+//import java.nio.file.Files;
+//import java.nio.file.Path;
+//import java.nio.file.Paths;
+//import com.google.gson.Gson;
+//import com.google.gson.GsonBuilder;
+//import java.io.IOException;
 
 public class HypixelAPIUtils {
     public static String fetchPlayerData(String urlString, String userAgent) {
@@ -55,10 +61,12 @@ public class HypixelAPIUtils {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
         JsonObject guildObject = new JsonParser().parse(guild).getAsJsonObject();
 
+//        saveJsonObject(guildObject, "blank"); // debugging stuff
+
         JsonObject profile;
 
         try {
-            if(rootObject.has("player")) {
+            if(!rootObject.get("player").isJsonNull()) {
                 profile = rootObject
                         .getAsJsonObject("player");
             } else {
@@ -82,6 +90,17 @@ public class HypixelAPIUtils {
                 ? guildObject.get("tag").getAsString()
                 : null;
 
+        if(tag != null) {
+            if(tag.contains("âœ§")) tag = tag.replaceAll("âœ§", "✧");
+            if(tag.contains("Î")) tag = tag.replaceAll("Î", "Θ");
+            if(tag.contains("âœŒ")) tag = tag.replaceAll("âœŒ", "✌");
+            if(tag.contains("â?¤")) tag = tag.replaceAll("â?¤", "❤");
+            if(tag.contains("âœ¿")) tag = tag.replaceAll("âœ¿", "✿");
+            if(tag.contains("âœª")) tag = tag.replaceAll("âœª", "✪");
+            if(tag.contains("âžŠ")) tag = tag.replaceAll("âžŠ", "➊");
+            if(tag.contains("âœ–")) tag = tag.replaceAll("âœ–", "✖");
+        }
+        
         String tagColor = guildObject.has("tagColor")
                 ? guildObject.get("tagColor").getAsString()
                 : null;
@@ -143,6 +162,7 @@ public class HypixelAPIUtils {
     }
 
     public static String formatRank(String displayName, String newPackageRank, String rankPlusColor, String monthlyPackageRank, String monthlyRankColor, String rank, String prefix) {
+        if (displayName == null) return null;
         if(displayName.equals("Technoblade"))  return "§d[PIG§b+++§d]";
         else if (displayName.equals("TommyInnit"))  return "§d[INNIT]";
         else if (prefix != null && prefix.equals("§6[MOJANG]")) return "§6[MOJANG]";
@@ -209,12 +229,10 @@ public class HypixelAPIUtils {
 
     public static Duels parseDuelsPlayerData(String json) {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
-//        saveRootObjectAsJson(rootObject); debugging stuff
-
-        JsonObject duelsStats = null, profile = null;
+        JsonObject duelsStats, profile;
 
         try {
-            if(rootObject.has("player")
+            if(!rootObject.get("player").isJsonNull()
                     && rootObject.get("player").getAsJsonObject().has("stats")
                     && rootObject.get("player").getAsJsonObject().getAsJsonObject("stats").has("Duels")) {
                 profile = rootObject.get("player").getAsJsonObject();
@@ -234,6 +252,16 @@ public class HypixelAPIUtils {
         } catch (Exception e) {
             UChat.chat("Something broke in parseDuelsPlayerData!");
             e.printStackTrace();
+            return new Duels(
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    null
+            );
         }
 
         assert duelsStats != null;
@@ -281,17 +309,22 @@ public class HypixelAPIUtils {
         );
     }
 
-    public static void saveJsonObject(JsonObject rootObject, String filename) {
-        Gson gson = new GsonBuilder()
-                .setPrettyPrinting()
-                .create();
-
-        try (FileWriter writer = new FileWriter(filename)) {
-            gson.toJson(rootObject, writer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+//    public static void saveJsonObject(JsonObject jsonObject, String filePath)
+//            throws IOException {
+//
+//        Gson gson = new GsonBuilder()
+//                .setPrettyPrinting()
+//                .create();
+//
+//        String formattedJson = gson.toJson(jsonObject);
+//
+//        Path path = Paths.get(filePath);
+//        if (path.getParent() != null) {
+//            Files.createDirectories(path.getParent());
+//        }
+//
+//        Files.write(path, formattedJson.getBytes(StandardCharsets.UTF_8));
+//    }
 
     private static final double BASE = 10_000;
     private static final double GROWTH = 2_500;
@@ -327,11 +360,11 @@ public class HypixelAPIUtils {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
 //        saveJsonObject(rootObject, "player-data.json"); debugging stuff
 
-        JsonObject achievements = null;
-        JsonObject bedwarsStats = null;
+        JsonObject achievements;
+        JsonObject bedwarsStats;
 
         try {
-            if(rootObject.has("player")
+            if(!rootObject.get("player").isJsonNull()
                     && rootObject.getAsJsonObject("player").has("achievements")
                     && rootObject.getAsJsonObject("player").has("stats")
                     && rootObject.getAsJsonObject("player").getAsJsonObject("stats").has("Bedwars")) {
@@ -355,6 +388,16 @@ public class HypixelAPIUtils {
         } catch (Exception e) {
             UChat.chat("Something broke in parseBedwarsPlayerData!");
             e.printStackTrace();
+            return new Bedwars(
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1
+            );
         }
 
         assert achievements != null;
