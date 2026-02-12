@@ -91,14 +91,14 @@ public class HypixelAPIUtils {
                 : null;
 
         if(tag != null) {
-            if(tag.contains("âœ§")) tag = tag.replaceAll("âœ§", "✧");
-            if(tag.contains("Î")) tag = tag.replaceAll("Î", "Θ");
-            if(tag.contains("âœŒ")) tag = tag.replaceAll("âœŒ", "✌");
-            if(tag.contains("â?¤")) tag = tag.replaceAll("â?¤", "❤");
-            if(tag.contains("âœ¿")) tag = tag.replaceAll("âœ¿", "✿");
-            if(tag.contains("âœª")) tag = tag.replaceAll("âœª", "✪");
-            if(tag.contains("âžŠ")) tag = tag.replaceAll("âžŠ", "➊");
-            if(tag.contains("âœ–")) tag = tag.replaceAll("âœ–", "✖");
+            tag = tag.replaceAll("âœ§", "✧")
+                    .replaceAll("Î", "Θ")
+                    .replaceAll("âœŒ", "✌")
+                    .replaceAll("â?¤", "❤")
+                    .replaceAll("âœ¿", "✿")
+                    .replaceAll("âœª", "✪")
+                    .replaceAll("âžŠ", "➊")
+                    .replaceAll("âœ–", "✖");
         }
         
         String tagColor = guildObject.has("tagColor")
