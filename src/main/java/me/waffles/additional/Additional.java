@@ -11,10 +11,10 @@ import me.waffles.additional.config.ModConfig;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import me.waffles.additional.mixin.EntityLivingBaseAccessor;
-import me.waffles.additional.util.Bedwars;
-import me.waffles.additional.util.Duels;
+import me.waffles.additional.playerData.Bedwars;
+import me.waffles.additional.playerData.Duels;
 import me.waffles.additional.util.EldestRemovalMap;
-import me.waffles.additional.util.PlayerProfile;
+import me.waffles.additional.playerData.PlayerProfile;
 
 @Mod(modid = Additional.MODID, name = Additional.NAME, version = Additional.VERSION)
 public class Additional {
