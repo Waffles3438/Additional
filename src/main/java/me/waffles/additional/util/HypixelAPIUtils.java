@@ -95,7 +95,7 @@ public class HypixelAPIUtils {
 
         if(tag != null) {
             tag = tag.replaceAll("âœ§", "✧")
-                    .replaceAll("Î", "Θ")
+                    .replaceAll("Î˜", "Θ")
                     .replaceAll("âœŒ", "✌")
                     .replaceAll("â?¤", "❤")
                     .replaceAll("âœ¿", "✿")
