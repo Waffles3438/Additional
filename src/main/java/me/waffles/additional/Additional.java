@@ -19,10 +19,9 @@ import me.waffles.additional.playerData.PlayerProfile;
 @Mod(modid = Additional.MODID, name = Additional.NAME, version = Additional.VERSION)
 public class Additional {
 
-    public static final String MODID = "@MOD_ID@";
-    public static final String NAME = "@MOD_NAME@";
-    public static final String VERSION = "@MOD_VERSION@";
-
+    public static final String MODID = "@ID@";
+    public static final String NAME = "@NAME@";
+    public static final String VERSION = "@VER@";
     public static ModConfig config;
     public static EldestRemovalMap<String, Duels> duelsStatsList;
     public static EldestRemovalMap<String, Bedwars> bedwarsStatsList;
