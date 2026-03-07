@@ -7,8 +7,8 @@ import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import com.mojang.authlib.GameProfile;
 import me.waffles.additional.Additional;
 import me.waffles.additional.util.HypixelAPIUtils;
-import me.waffles.additional.util.Duels;
-import me.waffles.additional.util.PlayerProfile;
+import me.waffles.additional.playerData.Duels;
+import me.waffles.additional.playerData.PlayerProfile;
 import net.minecraft.client.Minecraft;
 
 import java.util.NavigableMap;

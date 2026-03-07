@@ -6,9 +6,9 @@ import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import com.mojang.authlib.GameProfile;
 import me.waffles.additional.Additional;
-import me.waffles.additional.util.Bedwars;
+import me.waffles.additional.playerData.Bedwars;
 import me.waffles.additional.util.HypixelAPIUtils;
-import me.waffles.additional.util.PlayerProfile;
+import me.waffles.additional.playerData.PlayerProfile;
 import net.minecraft.client.Minecraft;
 
 import java.io.IOException;

@@ -5,6 +5,9 @@ import cc.polyfrost.oneconfig.libs.universal.UChat;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.waffles.additional.command.DuelsStatsCommand;
+import me.waffles.additional.playerData.Bedwars;
+import me.waffles.additional.playerData.Duels;
+import me.waffles.additional.playerData.PlayerProfile;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
