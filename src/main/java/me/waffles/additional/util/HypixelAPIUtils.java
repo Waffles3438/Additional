@@ -102,7 +102,8 @@ public class HypixelAPIUtils {
                     .replaceAll("âžŠ", "➊")
                     .replaceAll("âœ–", "✖")
                     .replaceAll("â?¤", "❤")
-                    .replaceAll("[^a-zA-Z0-9✧θ✌✿✪➊✖❤]", "");
+                    .replaceAll("âœ“", "✓")
+                    .replaceAll("[^a-zA-Z0-9✧θ✌✿✪➊✖❤✓]", "");
         }
         
         String tagColor = guildObject.has("tagColor")
