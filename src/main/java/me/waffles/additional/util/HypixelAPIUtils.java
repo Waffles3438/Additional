@@ -64,7 +64,7 @@ public class HypixelAPIUtils {
         JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
         JsonObject guildObject = new JsonParser().parse(guild).getAsJsonObject();
 
-//        saveJsonObject(guildObject, "blank"); // debugging stuff
+//        saveJsonObject(rootObject, "blank"); // debugging stuff
 
         JsonObject profile;
 
@@ -97,11 +97,13 @@ public class HypixelAPIUtils {
             tag = tag.replaceAll("âœ§", "✧")
                     .replaceAll("Î˜", "Θ")
                     .replaceAll("âœŒ", "✌")
-                    .replaceAll("â?¤", "❤")
                     .replaceAll("âœ¿", "✿")
                     .replaceAll("âœª", "✪")
                     .replaceAll("âžŠ", "➊")
-                    .replaceAll("âœ–", "✖");
+                    .replaceAll("âœ–", "✖")
+                    .replaceAll("â?¤", "❤")
+                    .replaceAll("âœ“", "✓")
+                    .replaceAll("[^a-zA-Z0-9✧θ✌✿✪➊✖❤✓]", "");
         }
         
         String tagColor = guildObject.has("tagColor")
@@ -223,7 +225,9 @@ public class HypixelAPIUtils {
             } else {
                 return "§b[MVP" + color + "+" + "§b]";
             }
-        } else if (newPackageRank != null && newPackageRank.equals("MVP_PLUS")) return "§b[MVP§c+§b]";
+        }
+        else if (newPackageRank != null && newPackageRank.equals("MVP_PLUS") && monthlyPackageRank != null && monthlyPackageRank.equals("SUPERSTAR")) return "§6[MVP§c++§6]";
+        else if (newPackageRank != null && newPackageRank.equals("MVP_PLUS")) return "§b[MVP§c+§b]";
         else if (newPackageRank != null && newPackageRank.equals("MVP")) return "§b[MVP]";
         else if (newPackageRank != null && newPackageRank.equals("VIP_PLUS")) return "§a[VIP§6+§a]";
         else if (newPackageRank != null && newPackageRank.equals("VIP")) return "§a[VIP]";
