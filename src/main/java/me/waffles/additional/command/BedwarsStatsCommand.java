@@ -127,8 +127,7 @@ public class BedwarsStatsCommand {
         );
     }
 
-    public PlayerProfile fetchPlayerProfileData(String uuid)
-            throws IOException {
+    public PlayerProfile fetchPlayerProfileData(String uuid) {
         String stjson = fetchPlayerData(uuid);
         String guild =  fetchPlayerGuildData(uuid);
         if (stjson == null || stjson.isEmpty() || guild == null || guild.isEmpty()) {
