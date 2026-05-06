@@ -14,6 +14,7 @@ public class BotUtils {
     public static boolean isBot(Entity entity) {
         return botCache.computeIfAbsent(entity.getUniqueID(), uuid -> {
             if (!(entity instanceof EntityPlayer)) return true;
+            if (uuid.version() == 2) return true;
 
             NetworkPlayerInfo info = Minecraft.getMinecraft()
                     .getNetHandler()
