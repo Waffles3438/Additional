@@ -26,14 +26,15 @@ public class BotUtils {
             return true;
         }
 
-        // Not in tab list — could be a real player whose PlayerListItem
-        // packet just hasn't arrived yet. Don't cache; try again later.
         NetworkPlayerInfo info = Minecraft.getMinecraft().getNetHandler().getPlayerInfo(uuid);
         if (info == null) {
-            return true;
+            return true; // not cached — tab entry may just not have arrived yet
         }
 
-        String name = player.getName();
+        // Use the tab-list profile's name, not player.getName() — the entity's
+        // own GameProfile can be permanently null-named if SpawnPlayer raced
+        // ahead of the PlayerListItem packet at spawn time.
+        String name = info.getGameProfile().getName();
         boolean result;
         if (name == null || name.replaceAll("[^a-zA-Z0-9_]", "").isEmpty()) {
             result = true;
