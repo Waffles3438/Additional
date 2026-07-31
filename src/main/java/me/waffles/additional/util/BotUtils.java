@@ -12,20 +12,37 @@ public class BotUtils {
     private static final HashMap<UUID, Boolean> botCache = new HashMap<>();
 
     public static boolean isBot(Entity entity) {
-        return botCache.computeIfAbsent(entity.getUniqueID(), uuid -> {
-            if (!(entity instanceof EntityPlayer)) return true;
-            if (uuid.version() == 2) return true;
+        if (!(entity instanceof EntityPlayer)) return true;
+        EntityPlayer player = (EntityPlayer) entity;
+        UUID uuid = player.getUniqueID();
 
-            NetworkPlayerInfo info = Minecraft.getMinecraft()
-                    .getNetHandler()
-                    .getPlayerInfo(uuid);
+        Boolean cached = botCache.get(uuid);
+        if (cached != null) {
+            return cached;
+        }
 
-            if (info == null) return true;
+        if (uuid.version() == 2) {
+            botCache.put(uuid, true);
+            return true;
+        }
 
-            String name = entity.getName();
-            if (name == null) return true;
-            return name.contains("[NPC]") || name.contains("[BOT]") || name.contains("npc-");
-        });
+        // Not in tab list — could be a real player whose PlayerListItem
+        // packet just hasn't arrived yet. Don't cache; try again later.
+        NetworkPlayerInfo info = Minecraft.getMinecraft().getNetHandler().getPlayerInfo(uuid);
+        if (info == null) {
+            return true;
+        }
+
+        String name = player.getName();
+        boolean result;
+        if (name == null || name.replaceAll("[^a-zA-Z0-9_]", "").isEmpty()) {
+            result = true;
+        } else {
+            result = name.contains("[NPC]") || name.contains("[BOT]") || name.contains("npc-");
+        }
+
+        botCache.put(uuid, result);
+        return result;
     }
 
     public static void clearCache() {
