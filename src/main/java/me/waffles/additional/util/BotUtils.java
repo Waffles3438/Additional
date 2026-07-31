@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 public class BotUtils {
     private static final HashMap<UUID, Boolean> botCache = new HashMap<>();
-    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-zA-Z0-9_]");
+    private static final Pattern ALPHANUMERIC = Pattern.compile("[a-zA-Z0-9_]");
 
     public static boolean isBot(Entity entity) {
         if (!(entity instanceof EntityPlayer)) return true;
@@ -38,7 +38,7 @@ public class BotUtils {
         // ahead of the PlayerListItem packet at spawn time.
         String name = info.getGameProfile().getName();
         boolean result;
-        if (name == null || !NON_ALPHANUMERIC.matcher(name).find()) {
+        if (name == null || !ALPHANUMERIC.matcher(name).find()) {
             result = true;
         } else {
             result = name.contains("[NPC]") || name.contains("[BOT]") || name.contains("npc-");
