@@ -1,7 +1,10 @@
 package me.waffles.additional;
 
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
+import me.waffles.additional.util.BotUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -15,6 +18,7 @@ import me.waffles.additional.playerData.Bedwars;
 import me.waffles.additional.playerData.Duels;
 import me.waffles.additional.util.EldestRemovalMap;
 import me.waffles.additional.playerData.PlayerProfile;
+import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
 @Mod(modid = Additional.MODID, name = Additional.NAME, version = Additional.VERSION)
 public class Additional {
@@ -46,5 +50,10 @@ public class Additional {
                 ((EntityLivingBaseAccessor) Minecraft.getMinecraft().thePlayer).setJumpTicks(ModConfig.jumpTicks);
             }
         }
+    }
+
+    @SubscribeEvent
+    public void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
+        BotUtils.clearCache();
     }
 }

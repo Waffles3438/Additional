@@ -24,7 +24,6 @@ public class BedwarsStatsCommand {
         Multithreading.runAsync(() ->
             fetchAndPrintStats(Username, uuid)
         );
-
     }
 
     @Main

@@ -1,5 +1,6 @@
 package me.waffles.additional.mixin;
 
+import me.waffles.additional.util.BotUtils;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RendererLivingEntity;
 import net.minecraft.entity.Entity;
@@ -53,7 +54,7 @@ public class RenderLivingEntityMixin {
             )
     )
     private Team showInvis(EntityLivingBase instance) {
-        if(ModConfig.invisNametags && !isBot(instance) && ModConfig.masterSwitch) {
+        if(ModConfig.invisNametags && !BotUtils.isBot(instance) && ModConfig.masterSwitch) {
             return null;
         }
         return instance.getTeam();
@@ -67,7 +68,7 @@ public class RenderLivingEntityMixin {
             )
     )
     private boolean cancel(EntityLivingBase instance) {
-        if(isBot(instance)) return instance.isSneaking();
+        if(BotUtils.isBot(instance)) return instance.isSneaking();
         return !(ModConfig.nametagsOnShift && ModConfig.masterSwitch) && instance.isSneaking();
     }
 
@@ -79,7 +80,7 @@ public class RenderLivingEntityMixin {
             )
     )
     private boolean showInvisible(EntityLivingBase instance, EntityPlayer entityPlayer) {
-        if(ModConfig.invisNametags && ModConfig.masterSwitch && instance.isInvisible() && !isBot(instance)) {
+        if(ModConfig.invisNametags && ModConfig.masterSwitch && instance.isInvisible() && !BotUtils.isBot(instance)) {
             return false;
         }
         return !entityPlayer.isSpectator() && instance.isInvisible();
@@ -95,20 +96,5 @@ public class RenderLivingEntityMixin {
             return 256F;
         }
         return range;
-    }
-
-    public boolean isBot(Entity entity){
-        if (entity.getUniqueID().version() == 2 ||
-                entity instanceof EntityPlayer &&
-                        (entity.getName().contains("[NPC]")
-                                || entity.getName().contains("[BOT]")
-                                || entity.getName() == null
-                                || entity.getName().contains("npc-")
-                                || (entity.getName().contains("§") && (entity.getName().contains("SHOP") || entity.getName().contains("UPGRADE"))))
-        ) {
-            return true;
-        } else {
-            return !(entity instanceof EntityPlayer);
-        }
     }
 }
