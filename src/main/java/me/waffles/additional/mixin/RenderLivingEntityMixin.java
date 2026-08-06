@@ -1,6 +1,5 @@
 package me.waffles.additional.mixin;
 
-import me.waffles.additional.render.NameTagESP;
 import me.waffles.additional.util.BotUtils;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RendererLivingEntity;
@@ -17,16 +16,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = RendererLivingEntity.class)
 public class RenderLivingEntityMixin {
-
-    @Inject(
-            method = "renderName(Lnet/minecraft/entity/EntityLivingBase;DDD)V",
-            at = @At("HEAD")
-    )
-    private void markRendered(EntityLivingBase entity, double x, double y, double z, CallbackInfo ci) {
-        if (entity instanceof EntityPlayer) {
-            NameTagESP.renderedPlayers.add(entity.getUniqueID());
-        }
-    }
 
     @Inject(
             method = "renderName(Lnet/minecraft/entity/EntityLivingBase;DDD)V",
