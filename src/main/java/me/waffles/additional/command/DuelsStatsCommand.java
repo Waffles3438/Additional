@@ -50,24 +50,29 @@ public class DuelsStatsCommand {
     private void fetchAndPrintStats(String Username, String uuid) {
         String key = Username.toLowerCase();
 
-        // fetch profile here
-        if(!Additional.playerProfileList.containsKey(key)) {
-            PlayerProfile profile = fetchPlayerProfileData(uuid);
-            if(profile == null) {
-                UChat.chat("§cSomething went wrong while fetching stats for " + Username + ". Please try again.");
-                return;
-            }
-            Additional.playerProfileList.put(key, profile);
-        }
-
         // fetch stats here
-        if(!Additional.duelsStatsList.containsKey(key)) {
-            Duels duels = fetchPlayerDuelsStats(uuid);
-            if(duels == null) {
+        boolean needProfile = !Additional.playerProfileList.containsKey(key);
+        boolean needStats = !Additional.duelsStatsList.containsKey(key);
+
+        if (needProfile || needStats) {
+            String stjson = fetchPlayerData(uuid);
+
+            if (stjson == null || stjson.isEmpty()) {
                 UChat.chat("§cSomething went wrong while fetching stats for " + Username + ". Please try again.");
                 return;
             }
-            Additional.duelsStatsList.put(key, duels);
+
+            if (needStats) {
+                Additional.duelsStatsList.put(key, HypixelAPIUtils.parseDuelsPlayerData(stjson));
+            }
+
+            if (needProfile) {
+                String guild = fetchPlayerGuildData(uuid);
+                if (guild == null || guild.isEmpty()) {
+                    guild = "{}";
+                }
+                Additional.playerProfileList.put(key, HypixelAPIUtils.parsePlayerProfilePlayerData(stjson, guild));
+            }
         }
 
         // print stats here
@@ -129,27 +134,6 @@ public class DuelsStatsCommand {
                 "http://api.abyssoverlay.com/guild?uuid=" + uuid,
                 "node-ao/2.0.3"
         );
-    }
-
-    public PlayerProfile fetchPlayerProfileData(String uuid) {
-        String stjson = fetchPlayerData(uuid);
-        String guild = fetchPlayerGuildData(uuid);
-        if (stjson == null || stjson.isEmpty()) {
-            return null;
-        }
-        if (guild == null || guild.isEmpty()) {
-            guild = "{}";
-        }
-        return HypixelAPIUtils.parsePlayerProfilePlayerData(stjson, guild);
-    }
-
-
-    public Duels fetchPlayerDuelsStats(String uuid) {
-        String stjson = fetchPlayerData(uuid);
-        if (stjson == null || stjson.isEmpty()) {
-            return null;
-        }
-        return HypixelAPIUtils.parseDuelsPlayerData(stjson);
     }
 
     private String formatColors(int stat, int god) {
