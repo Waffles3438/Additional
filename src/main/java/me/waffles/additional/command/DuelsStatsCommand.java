@@ -124,8 +124,12 @@ public class DuelsStatsCommand {
     public PlayerProfile fetchPlayerProfileData(String uuid) {
         String stjson = fetchPlayerData(uuid);
         String guild =  fetchPlayerGuildData(uuid);
-        if (stjson == null || stjson.isEmpty() || guild == null || guild.isEmpty()) {
-            System.out.println("Either player or guild is empty");
+        if (stjson == null || stjson.isEmpty()) {
+            System.out.println("Stats is empty");
+            return null;
+        }
+        if(guild == null || guild.isEmpty()) {
+            System.out.println("Guild is empty");
             return null;
         }
         return HypixelAPIUtils.parsePlayerProfilePlayerData(stjson, guild);
