@@ -34,6 +34,7 @@ public class BedwarsStatsCommand {
                 uuid = player1.getId().toString();
                 Username = player1.getName();
             } catch (Exception e) {
+                e.printStackTrace();
                 UChat.chat("Invalid player");
                 return;
             }
