@@ -21,15 +21,46 @@ import java.net.URL;
 //import java.nio.file.Paths;
 //import com.google.gson.Gson;
 //import com.google.gson.GsonBuilder;
-//import java.io.IOException;
+import java.io.IOException;
 
 public class HypixelAPIUtils {
+    private static final int MAX_ATTEMPTS = 3;
+    private static final int CONNECT_TIMEOUT = 5000;
+    private static final int READ_TIMEOUT = 10000;
+
     public static String fetchPlayerData(String urlString, String userAgent) {
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            try {
+                String response = doFetch(urlString, userAgent);
+                if (response != null) {
+                    return response;
+                }
+            } catch (Exception e) {
+                if (attempt == MAX_ATTEMPTS) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (attempt < MAX_ATTEMPTS) {
+                try {
+                    Thread.sleep(500L * attempt);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return "";
+                }
+            }
+        }
+        return "";
+    }
+
+    private static String doFetch(String urlString, String userAgent) throws IOException {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(urlString);
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
+            connection.setConnectTimeout(CONNECT_TIMEOUT);
+            connection.setReadTimeout(READ_TIMEOUT);
             if (userAgent != null) {
                 connection.setRequestProperty("User-Agent", userAgent);
             }
@@ -37,27 +68,29 @@ public class HypixelAPIUtils {
             int responseCode = connection.getResponseCode();
 
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                BufferedReader in = new BufferedReader(
-                        new InputStreamReader(connection.getInputStream())
-                );
                 StringBuilder response = new StringBuilder();
-                String inputLine;
+                try (BufferedReader in = new BufferedReader(
+                        new InputStreamReader(connection.getInputStream())
+                )) {
+                    String inputLine;
 
-                while ((inputLine = in.readLine()) != null) {
-                    response.append(inputLine);
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
                 }
-                in.close();
 
                 return response.toString();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            if (responseCode == 429 || responseCode >= 500) {
+                return null;
+            }
+            return "";
         } finally {
             if (connection != null) {
                 connection.disconnect();
             }
         }
-        return "";
     }
 
     public static PlayerProfile parsePlayerProfilePlayerData(String json, String guild) {

@@ -44,17 +44,32 @@ public class BedwarsStatsCommand {
     }
 
     private void fetchAndPrintStats(String Username, String uuid) {
+        String key = Username.toLowerCase();
+
+        // fetch profile here
+        if(!Additional.playerProfileList.containsKey(key)) {
+            PlayerProfile profile = fetchPlayerProfileData(uuid);
+            if(profile == null) {
+                UChat.chat("§cSomething went wrong while fetching stats for " + Username + ". Please try again.");
+                return;
+            }
+            Additional.playerProfileList.put(key, profile);
+        }
 
         // fetch stats here
-        if(!Additional.bedwarsStatsList.containsKey(Username.toLowerCase())) {
+        if(!Additional.bedwarsStatsList.containsKey(key)) {
+            Bedwars bedwars;
             try {
-                Additional.playerProfileList.put(Username.toLowerCase(), fetchPlayerProfileData(uuid));
-                Additional.bedwarsStatsList.put(Username.toLowerCase(), fetchPlayerBedwarsStats(uuid));
+                bedwars = fetchPlayerBedwarsStats(uuid);
             } catch (IOException e) {
-                UChat.chat("Something broke while fetching stats!");
                 e.printStackTrace();
-                throw new RuntimeException(e);
+                bedwars = null;
             }
+            if(bedwars == null) {
+                UChat.chat("§cSomething went wrong while fetching stats for " + Username + ". Please try again.");
+                return;
+            }
+            Additional.bedwarsStatsList.put(key, bedwars);
         }
 
         // prints stats here
@@ -129,14 +144,12 @@ public class BedwarsStatsCommand {
 
     public PlayerProfile fetchPlayerProfileData(String uuid) {
         String stjson = fetchPlayerData(uuid);
-        String guild =  fetchPlayerGuildData(uuid);
+        String guild = fetchPlayerGuildData(uuid);
         if (stjson == null || stjson.isEmpty()) {
-            System.out.println("Stats is empty");
             return null;
         }
-        if(guild == null || guild.isEmpty()) {
-            System.out.println("Guild is empty");
-            return null;
+        if (guild == null || guild.isEmpty()) {
+            guild = "{}";
         }
         return HypixelAPIUtils.parsePlayerProfilePlayerData(stjson, guild);
     }
