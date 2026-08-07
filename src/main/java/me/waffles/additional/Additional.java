@@ -1,7 +1,6 @@
 package me.waffles.additional;
 
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
-import me.waffles.additional.render.NameTagESP;
 import me.waffles.additional.util.BotUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
@@ -36,7 +35,6 @@ public class Additional {
     @Mod.EventHandler
     public void onInit(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(this);
-        MinecraftForge.EVENT_BUS.register(new NameTagESP());
         config = new ModConfig();
         duelsStatsList = new EldestRemovalMap<>(ModConfig.maxCacheSize);
         bedwarsStatsList = new EldestRemovalMap<>(ModConfig.maxCacheSize);
