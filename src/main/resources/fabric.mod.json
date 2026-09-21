@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "additional",
+  "version": "${version}",
+  "name": "Additional",
+  "description": "Nametag enhancements, configurable jump delay, and Hypixel stat commands.",
+  "authors": ["iAT3"],
+  "environment": "client",
+  "entrypoints": { "client": ["me.waffles.additional.Additional"] },
+  "mixins": ["mixins.additional.json"],
+  "depends": {
+    "minecraft": "1.8.9",
+    "fabricloader": ">=0.19.3",
+    "java": ">=25",
+    "oneconfigv1": ">=1.2.3",
+    "lenis": ">=0.1.4"
+  }
+}

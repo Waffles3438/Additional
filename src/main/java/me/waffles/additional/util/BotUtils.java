@@ -1,10 +1,10 @@
 package me.waffles.additional.util;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.network.NetHandlerPlayClient;
-import net.minecraft.client.network.NetworkPlayerInfo;
+import net.minecraft.client.network.handler.ClientPlayNetworkHandler;
+import net.minecraft.client.network.PlayerInfo;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.living.player.PlayerEntity;
 
 import java.util.Map;
 import java.util.UUID;
@@ -13,18 +13,15 @@ import java.util.regex.Pattern;
 
 public class BotUtils {
 
-    // Read from the render thread on every nametag, but cleared from Forge's
-    // disconnect event, which fires on the Netty thread. A plain HashMap being
-    // cleared underneath a concurrent get() can corrupt the table, so this has to
-    // be a concurrent map rather than just "usually fine".
+    // Cleared whenever the client changes worlds, including disconnects.
     private static final Map<UUID, Boolean> botCache = new ConcurrentHashMap<>();
 
     private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-zA-Z0-9_]");
 
     public static boolean isBot(Entity entity) {
-        if (!(entity instanceof EntityPlayer)) return true;
-        EntityPlayer player = (EntityPlayer) entity;
-        UUID uuid = player.getUniqueID();
+        if (!(entity instanceof PlayerEntity)) return true;
+        PlayerEntity player = (PlayerEntity) entity;
+        UUID uuid = player.getUuid();
 
         Boolean cached = botCache.get(uuid);
         if (cached != null) {
@@ -37,14 +34,14 @@ public class BotUtils {
         }
 
         // Null between leaving a world and joining the next, and on the main menu.
-        // RenderWorldLastEvent and the Render mixins can both still fire in that
+        // The rendering mixins can still be queried in that
         // window, so this cannot be dereferenced blind.
-        NetHandlerPlayClient netHandler = Minecraft.getMinecraft().getNetHandler();
+        ClientPlayNetworkHandler netHandler = Minecraft.getInstance().getNetworkHandler();
         if (netHandler == null) {
             return true; // not cached - we simply cannot tell yet
         }
 
-        NetworkPlayerInfo info = netHandler.getPlayerInfo(uuid);
+        PlayerInfo info = netHandler.getOnlinePlayer(uuid);
         if (info == null) {
             return true; // not cached — tab entry may just not have arrived yet
         }
@@ -52,7 +49,7 @@ public class BotUtils {
         // Use the tab-list profile's name, not player.getName() — the entity's
         // own GameProfile can be permanently null-named if SpawnPlayer raced
         // ahead of the PlayerListItem packet at spawn time.
-        String name = info.getGameProfile().getName();
+        String name = info.getProfile().getName();
         boolean result = name == null || NON_ALPHANUMERIC.matcher(name).find();
 
         botCache.put(uuid, result);

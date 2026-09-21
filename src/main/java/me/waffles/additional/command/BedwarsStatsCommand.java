@@ -1,9 +1,7 @@
 package me.waffles.additional.command;
 
-import cc.polyfrost.oneconfig.libs.universal.UChat;
-import cc.polyfrost.oneconfig.utils.Multithreading;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
+import me.waffles.additional.util.ClientTasks;
+
 import me.waffles.additional.Additional;
 import me.waffles.additional.playerData.Bedwars;
 import me.waffles.additional.api.AbyssAPIUtils;
@@ -14,26 +12,22 @@ import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Command(value = "bw")
 public class BedwarsStatsCommand {
     private static final Logger LOGGER = LogManager.getLogger("Additional");
 
+    public void execute() {
+        String Username = Minecraft.getInstance().getSession().getProfile().getName();
+        String uuid = Minecraft.getInstance().getSession().getProfile().getId().toString();
 
-    @Main
-    private void main() {
-        String Username = Minecraft.getMinecraft().getSession().getProfile().getName();
-        String uuid = Minecraft.getMinecraft().getSession().getProfile().getId().toString();
-
-        Multithreading.runAsync(() ->
+        ClientTasks.runAsync(() ->
             fetchAndPrintStats(Username, uuid)
         );
     }
 
-    @Main
-    private void main(String username) {
-        Multithreading.runAsync(() -> {
+    public void execute(String username) {
+        ClientTasks.runAsync(() -> {
             if (username == null || username.isEmpty()) {
-                UChat.chat("Invalid player");
+                ClientTasks.chat("Invalid player");
                 return;
             }
 
@@ -46,7 +40,7 @@ public class BedwarsStatsCommand {
 
             String uuid = MojangAPIUtils.fetchUuid(username);
             if (uuid == null) {
-                UChat.chat("Invalid player");
+                ClientTasks.chat("Invalid player");
                 return;
             }
 
@@ -79,7 +73,7 @@ public class BedwarsStatsCommand {
             StatsProviderUtils.ResourceResult playerData = profileData.getPlayer();
             if (!playerData.isSuccess()) {
                 LOGGER.warn("Player data was unavailable for {} after all provider cycles.", Username);
-                UChat.chat("Something went wrong while fetching stats for " + Username + ". Please try again.");
+                ClientTasks.chat("Something went wrong while fetching stats for " + Username + ". Please try again.");
                 return;
             }
 
@@ -126,7 +120,7 @@ public class BedwarsStatsCommand {
                 }
                 if (guildUnavailable) {
                     LOGGER.warn("Guild data was unavailable for {}; showing stats without a guild tag.", Username);
-                    UChat.chat(Username + " guild data is unavailable; showing stats without a guild tag.");
+                    ClientTasks.chat(Username + " guild data is unavailable; showing stats without a guild tag.");
                 }
             }
         }
@@ -139,10 +133,10 @@ public class BedwarsStatsCommand {
         PlayerProfile profile = Additional.playerProfileList.get(Username.toLowerCase());
 
         if(profile == null) {
-            UChat.chat("Invalid player");
+            ClientTasks.chat("Invalid player");
             return;
         } else if(profile.getDisplayName() == null) {
-            UChat.chat(Username + " has no Hypixel stats.");
+            ClientTasks.chat(Username + " has no Hypixel stats.");
             return;
         }
         String formattedName = profile.getDisplayName();
@@ -151,7 +145,7 @@ public class BedwarsStatsCommand {
 
         int bedwarsstar = bedwarsStats.getBedwarsStar();
         if (bedwarsstar == -1) {
-            UChat.chat(Username + " has never played Bedwars");
+            ClientTasks.chat(Username + " has never played Bedwars");
             return;
         }
 
@@ -165,16 +159,16 @@ public class BedwarsStatsCommand {
         double bedwarsfkdr = bedwarsStats.getBedwarsFKDR();
         double bedwarswlr = bedwarsStats.getBedwarsWLR();
         double bedwarsbblr = bedwarsStats.getBedwarsBBLR();
-        UChat.chat("§9------------------------------------------");
-        UChat.chat(getFormattedRank(bedwarsstar) + " " + formattedName + " " + formattedGuildTag);
-        UChat.chat("FKDR: " + formatColors(bedwarsfkdr, 15));
-        UChat.chat("Final kills: " + formatColors(bedwarsfk, 25000));
-        UChat.chat("WLR: " + formatColors(bedwarswlr, 5));
-        UChat.chat("Wins: " + formatColors(bedwarsw, 20000));
-        UChat.chat("BBLR: " + formatColors(bedwarsbblr, 5));
-        UChat.chat("Beds: " + formatColors(bedwarsbb, 30000));
-        if(bedwarsws != -1) UChat.chat("Winstreak: " + bedwarsws);
-        UChat.chat("§9------------------------------------------");
+        ClientTasks.chat("§9------------------------------------------");
+        ClientTasks.chat(getFormattedRank(bedwarsstar) + " " + formattedName + " " + formattedGuildTag);
+        ClientTasks.chat("FKDR: " + formatColors(bedwarsfkdr, 15));
+        ClientTasks.chat("Final kills: " + formatColors(bedwarsfk, 25000));
+        ClientTasks.chat("WLR: " + formatColors(bedwarswlr, 5));
+        ClientTasks.chat("Wins: " + formatColors(bedwarsw, 20000));
+        ClientTasks.chat("BBLR: " + formatColors(bedwarsbblr, 5));
+        ClientTasks.chat("Beds: " + formatColors(bedwarsbb, 30000));
+        if(bedwarsws != -1) ClientTasks.chat("Winstreak: " + bedwarsws);
+        ClientTasks.chat("§9------------------------------------------");
     }
 
     static String formateName(PlayerProfile profile, String formattedName) {

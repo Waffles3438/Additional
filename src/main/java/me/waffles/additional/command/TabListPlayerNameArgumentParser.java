@@ -1,12 +1,10 @@
 package me.waffles.additional.command;
 
-import cc.polyfrost.oneconfig.utils.commands.arguments.ArgumentParser;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.network.NetHandlerPlayClient;
-import net.minecraft.client.network.NetworkPlayerInfo;
+import net.minecraft.client.network.handler.ClientPlayNetworkHandler;
+import net.minecraft.client.network.PlayerInfo;
 
-import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,24 +14,18 @@ import java.util.Locale;
  * Leaves the typed value untouched so any username can be looked up through the
  * Mojang API, while offering tab-list names as completion suggestions.
  */
-public class TabListPlayerNameArgumentParser extends ArgumentParser<String> {
-    @Override
-    public String parse(String value) {
-        return value;
-    }
-
-    @Override
-    public List<String> complete(String current, Parameter parameter) {
-        Minecraft minecraft = Minecraft.getMinecraft();
-        NetHandlerPlayClient netHandler = minecraft.getNetHandler();
-        if (minecraft.theWorld == null || netHandler == null) {
+public class TabListPlayerNameArgumentParser {
+    public static List<String> complete(String current) {
+        Minecraft minecraft = Minecraft.getInstance();
+        ClientPlayNetworkHandler netHandler = minecraft.getNetworkHandler();
+        if (minecraft.world == null || netHandler == null) {
             return Collections.emptyList();
         }
 
         String prefix = current == null ? "" : current.toLowerCase(Locale.ROOT);
         List<String> matches = new ArrayList<>();
-        for (NetworkPlayerInfo playerInfo : netHandler.getPlayerInfoMap()) {
-            GameProfile profile = playerInfo.getGameProfile();
+        for (PlayerInfo playerInfo : netHandler.getOnlinePlayers()) {
+            GameProfile profile = playerInfo.getProfile();
             if (profile == null || profile.getName() == null) {
                 continue;
             }

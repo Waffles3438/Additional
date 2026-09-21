@@ -1,14 +1,14 @@
 package me.waffles.additional.mixin;
 
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.living.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(EntityLivingBase.class)
+@Mixin(LivingEntity.class)
 public interface EntityLivingBaseAccessor {
-    @Accessor
+    @Accessor("jumpingCooldown")
     void setJumpTicks(int jumpTicks);
 
-    @Accessor
+    @Accessor("jumpingCooldown")
     int getJumpTicks();
 }

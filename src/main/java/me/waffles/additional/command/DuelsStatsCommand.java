@@ -1,9 +1,7 @@
 package me.waffles.additional.command;
 
-import cc.polyfrost.oneconfig.libs.universal.UChat;
-import cc.polyfrost.oneconfig.utils.Multithreading;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
+import me.waffles.additional.util.ClientTasks;
+
 import me.waffles.additional.Additional;
 import me.waffles.additional.api.AbyssAPIUtils;
 import me.waffles.additional.api.MojangAPIUtils;
@@ -20,26 +18,22 @@ import java.util.TreeMap;
 // debugging
 //import java.io.IOException;
 
-@Command(value = "d")
 public class DuelsStatsCommand {
     private static final Logger LOGGER = LogManager.getLogger("Additional");
 
+    public void execute() {
+        String Username = Minecraft.getInstance().getSession().getProfile().getName();
+        String uuid = Minecraft.getInstance().getSession().getProfile().getId().toString();
 
-    @Main
-    private void main() {
-        String Username = Minecraft.getMinecraft().getSession().getProfile().getName();
-        String uuid = Minecraft.getMinecraft().getSession().getProfile().getId().toString();
-
-        Multithreading.runAsync(() ->
+        ClientTasks.runAsync(() ->
             fetchAndPrintStats(Username, uuid)
         );
     }
 
-    @Main
-    private void main(String username) {
-        Multithreading.runAsync(() -> {
+    public void execute(String username) {
+        ClientTasks.runAsync(() -> {
             if (username == null || username.isEmpty()) {
-                UChat.chat("Invalid player");
+                ClientTasks.chat("Invalid player");
                 return;
             }
 
@@ -52,7 +46,7 @@ public class DuelsStatsCommand {
 
             String uuid = MojangAPIUtils.fetchUuid(username);
             if (uuid == null) {
-                UChat.chat("Invalid player");
+                ClientTasks.chat("Invalid player");
                 return;
             }
 
@@ -85,7 +79,7 @@ public class DuelsStatsCommand {
             StatsProviderUtils.ResourceResult playerData = profileData.getPlayer();
             if (!playerData.isSuccess()) {
                 LOGGER.warn("Player data was unavailable for {} after all provider cycles.", Username);
-                UChat.chat("Something went wrong while fetching stats for " + Username + ". Please try again.");
+                ClientTasks.chat("Something went wrong while fetching stats for " + Username + ". Please try again.");
                 return;
             }
 
@@ -132,7 +126,7 @@ public class DuelsStatsCommand {
                 }
                 if (guildUnavailable) {
                     LOGGER.warn("Guild data was unavailable for {}; showing stats without a guild tag.", Username);
-                    UChat.chat(Username + " guild data is unavailable; showing stats without a guild tag.");
+                    ClientTasks.chat(Username + " guild data is unavailable; showing stats without a guild tag.");
                 }
             }
         }
@@ -145,10 +139,10 @@ public class DuelsStatsCommand {
         PlayerProfile profile = Additional.playerProfileList.get(Username.toLowerCase());
 
         if(profile == null) {
-            UChat.chat("Invalid player");
+            ClientTasks.chat("Invalid player");
             return;
         } else if(profile.getDisplayName() == null) {
-            UChat.chat(Username + " has no Hypixel stats.");
+            ClientTasks.chat(Username + " has no Hypixel stats.");
             return;
         }
         String formattedName = profile.getDisplayName();
@@ -156,7 +150,7 @@ public class DuelsStatsCommand {
         Duels duelsStats = Additional.duelsStatsList.get(Username.toLowerCase());
         int duelsdeaths = duelsStats.getDuelsDeaths();
         if(duelsdeaths == -1) {
-            UChat.chat(Username + " has never played Duels.");
+            ClientTasks.chat(Username + " has never played Duels.");
             return;
         }
 
@@ -170,18 +164,18 @@ public class DuelsStatsCommand {
         int duelswins = duelsStats.getDuelsWins();
         double duelswlr = duelsStats.getDuelsWLR();
         String level = duelsStats.getLevel();
-        UChat.chat("§9------------------------------------------");
-        UChat.chat(getPlayerDivision(duelswins) + formattedName + " " + formattedGuildTag);
-        UChat.chat("Level: " + level);
-        UChat.chat("WLR: " + formatColors(duelswlr, 10));
-        UChat.chat("Wins: " + formatColors(duelswins, 20000));
-        UChat.chat("KDR: " + formatColors(duelskdr, 10));
-        UChat.chat("Kills: " + formatColors(duelskills, 20000));
+        ClientTasks.chat("§9------------------------------------------");
+        ClientTasks.chat(getPlayerDivision(duelswins) + formattedName + " " + formattedGuildTag);
+        ClientTasks.chat("Level: " + level);
+        ClientTasks.chat("WLR: " + formatColors(duelswlr, 10));
+        ClientTasks.chat("Wins: " + formatColors(duelswins, 20000));
+        ClientTasks.chat("KDR: " + formatColors(duelskdr, 10));
+        ClientTasks.chat("Kills: " + formatColors(duelskills, 20000));
         if(duelscws != -1 && duelsbws != -1) {
-            UChat.chat("Current Winstreak: " + duelscws);
-            UChat.chat("Best Winstreak: " + duelsbws);
+            ClientTasks.chat("Current Winstreak: " + duelscws);
+            ClientTasks.chat("Best Winstreak: " + duelsbws);
         }
-        UChat.chat("§9------------------------------------------");
+        ClientTasks.chat("§9------------------------------------------");
     }
 
     public String fetchPlayerData(String uuid) {

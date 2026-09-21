@@ -1,16 +1,14 @@
 {
-  "compatibilityLevel": "JAVA_8",
-  "minVersion": "0.7",
+  "required": true,
+  "compatibilityLevel": "JAVA_21",
+  "minVersion": "0.8",
   "package": "me.waffles.additional.mixin",
-  "refmap": "mixins.${mod_id}.refmap.json",
-  "injectors": {
-    "maxShiftBy": 5
-  },
+  "injectors": { "defaultRequire": 1 },
   "client": [
     "RenderLivingEntityMixin",
     "EntityLivingBaseAccessor",
     "RenderMixin",
-    "RenderLibEntityRendererMixin"
-  ],
-  "verbose": true
+    "MinecraftMixin",
+    "WorldRendererMixin"
+  ]
 }

@@ -1,30 +1,28 @@
 package me.waffles.additional.config;
 
-import cc.polyfrost.oneconfig.config.annotations.*;
-import cc.polyfrost.oneconfig.config.core.OneKeyBind;
-import cc.polyfrost.oneconfig.config.data.InfoType;
-import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
-import cc.polyfrost.oneconfig.utils.Notifications;
+import org.polyfrost.oneconfig.api.config.v1.Config;
+import org.polyfrost.oneconfig.api.config.v1.annotations.*;
+import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
+
 import me.waffles.additional.Additional;
 import me.waffles.additional.api.StatsProviderUtils;
-import cc.polyfrost.oneconfig.config.Config;
-import cc.polyfrost.oneconfig.config.data.Mod;
-import cc.polyfrost.oneconfig.config.data.ModType;
-import cc.polyfrost.oneconfig.config.data.OptionSize;
 
 public class ModConfig extends Config {
+    @Switch(title = "Enable nametag features", category = "Quality of Life", subcategory = "Nametags")
     public static boolean masterSwitch = false;
 
     @Switch(
-            name = "No jump delay",
-            size = OptionSize.DUAL,
+            title = "No jump delay",
             category = "Quality of Life",
             subcategory = "No Jump Delay"
     )
     public static boolean ndj = false;
 
     @Slider(
-            name = "Jump ticks",
+            title = "Jump ticks",
             min = 0, max = 10,
             step = 1,
             category = "Quality of Life",
@@ -32,47 +30,47 @@ public class ModConfig extends Config {
     )
     public static int jumpTicks = 3;
 
-    @KeyBind(
-            name = "Toggle Nametag Features",
+    @Keybind(
+            title = "Toggle Nametag Features",
             category = "Quality of Life",
-            subcategory = "Nametags",
-            size = OptionSize.DUAL
+            subcategory = "Nametags"
     )
-    public static OneKeyBind nametagsKeybind = new OneKeyBind(UKeyboard.KEY_C);
+    public static OneConfigKeybind nametagsKeybind = KeybindHelper.builder()
+            .key(Platform.compatibility().keys().getKeyC()).name("Toggle Nametag Features").category("Additional")
+            .action((Runnable) ModConfig::toggleNametags).register();
 
     @Checkbox(
-            name = "Show nametags on shift",
+            title = "Show nametags on shift",
             category = "Quality of Life",
             subcategory = "Nametags"
     )
     public static boolean nametagsOnShift = false;
 
     @Checkbox(
-            name = "Show invisible player nametags",
+            title = "Show invisible player nametags",
             category = "Quality of Life",
             subcategory = "Nametags"
     )
     public static boolean invisNametags = false;
 
     @Checkbox(
-            name = "Extend nametag range",
+            title = "Extend nametag range",
             category = "Quality of Life",
             subcategory = "Nametags"
     )
     public static boolean extendNametagRange = false;
 
     @Checkbox(
-            name = "Show nametags behind walls",
+            title = "Show nametags behind walls",
             category = "Quality of Life",
             subcategory = "Nametags"
     )
     public static boolean nametagsThroughWalls = false;
 
     @Switch(
-            name = "Legit Mode",
+            title = "Legit Mode",
             category = "Quality of Life",
-            subcategory = "Nametags",
-            size = OptionSize.DUAL
+            subcategory = "Nametags"
     )
     public static boolean legitMode = false;
 
@@ -85,20 +83,21 @@ public class ModConfig extends Config {
     }
 
     @Button(
-            name = "Clear cache",
+            title = "Clear cache",
             text = "Clear",
             category = "Stat Checking"
     )
-    Runnable runnable = () -> {
+    public void clearCache() {
         StatsProviderUtils.invalidateCacheGeneration();
         Additional.bedwarsStatsList.clear();
         Additional.duelsStatsList.clear();
         Additional.playerProfileList.clear();
-        Notifications.INSTANCE.send("Additional", "Cleared player cache", 3000);
-    };
+        Notifications.info("Additional", "Cleared player cache", 3f);
+    }
 
     @Slider(
-            name = "Amount of players cached",
+            title = "Amount of players cached",
+            description = "Restart Minecraft to apply changes",
             min = 1,
             max = 16,
             step = 1,
@@ -106,27 +105,18 @@ public class ModConfig extends Config {
     )
     public static int maxCacheSize = 4;
 
-    @Info(
-            text = "Restart Minecraft to apply changes",
-            type = InfoType.INFO,
-            category = "Stat Checking",
-            size = OptionSize.DUAL
-    )
-    public static boolean ignored2; // Useless. Java limitations with @annotation.
-
+    private static void toggleNametags() {
+        Additional.config.getProperty("masterSwitch").setAs(!masterSwitch);
+        Notifications.info("Additional", (masterSwitch ? "Enabled" : "Disabled") + " nametag additions", 3f);
+    }
 
     public ModConfig() {
-        super(new Mod(Additional.NAME, ModType.UTIL_QOL), Additional.MODID + ".json");
-        initialize();
+        super(Additional.MODID, Additional.NAME, Category.QOL);
         addDependency("jumpTicks", "ndj");
         addDependency("nametagsOnShift", "masterSwitch");
         addDependency("invisNametags", "masterSwitch");
         addDependency("extendNametagRange", "masterSwitch");
         addDependency("nametagsThroughWalls", "masterSwitch");
-        registerKeyBind(nametagsKeybind, () -> {
-            Notifications.INSTANCE.send("Addition", (masterSwitch ? "Disabled" : "Enabled") + " nametag additions", 3000);
-            masterSwitch = !masterSwitch;
-        });
+
     }
 }
-

@@ -1,9 +1,9 @@
 package me.waffles.additional.mixin;
 
 import me.waffles.additional.util.BotUtils;
-import net.minecraft.client.renderer.entity.Render;
+import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.living.player.PlayerEntity;
 import me.waffles.additional.config.ModConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,10 +13,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static org.lwjgl.opengl.GL11.*;
 
-@Mixin(value = Render.class)
+@Mixin(value = EntityRenderer.class)
 public class RenderMixin {
 
-    @Inject(method = "renderLivingLabel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlStateManager;disableDepth()V"))
+    @Inject(method = "renderNameTag(Lnet/minecraft/entity/Entity;Ljava/lang/String;DDDI)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/platform/GlStateManager;disableDepthTest()V"))
     private void enableOffsetFill(Entity entity, String str, double x, double y, double z, int maxDistance, CallbackInfo ci) {
         if(ModConfig.nametagsThroughWalls && !BotUtils.isBot(entity) && ModConfig.masterSwitch) {
             glEnable(GL_POLYGON_OFFSET_FILL);
@@ -29,7 +29,7 @@ public class RenderMixin {
         }
     }
 
-    @Inject(method = "renderLivingLabel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlStateManager;enableLighting()V"))
+    @Inject(method = "renderNameTag(Lnet/minecraft/entity/Entity;Ljava/lang/String;DDDI)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/platform/GlStateManager;enableLighting()V"))
     private void disableOffsetFill(Entity entity, String str, double x, double y, double z, int maxDistance, CallbackInfo ci) {
         if(ModConfig.nametagsThroughWalls && !BotUtils.isBot(entity) && ModConfig.masterSwitch) {
             glPolygonOffset(0.0f, 0.0f);
@@ -38,16 +38,16 @@ public class RenderMixin {
     }
 
     @Redirect(
-            method = "renderLivingLabel",
+            method = "renderNameTag(Lnet/minecraft/entity/Entity;Ljava/lang/String;DDDI)V",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/entity/Entity;getDistanceSqToEntity(Lnet/minecraft/entity/Entity;)D"
+                    target = "Lnet/minecraft/entity/Entity;squaredDistanceTo(Lnet/minecraft/entity/Entity;)D"
             )
     )
     private double extendNametagRange(Entity entityIn, Entity instance) {
         if(ModConfig.extendNametagRange && !BotUtils.isBot(entityIn) && ModConfig.masterSwitch) {
             return 0.0D;
         }
-        return entityIn.getDistanceSqToEntity(instance);
+        return entityIn.squaredDistanceTo(instance);
     }
 }
