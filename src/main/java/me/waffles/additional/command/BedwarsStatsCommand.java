@@ -6,8 +6,11 @@ import me.waffles.additional.Additional;
 import me.waffles.additional.playerData.Bedwars;
 import me.waffles.additional.api.AbyssAPIUtils;
 import me.waffles.additional.api.MojangAPIUtils;
+import me.waffles.additional.util.PlayerIdentity;
+import java.util.Locale;
 import me.waffles.additional.api.StatsProviderUtils;
 import me.waffles.additional.playerData.PlayerProfile;
+import me.waffles.additional.playerData.Duels;
 import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,20 +28,22 @@ public class BedwarsStatsCommand {
     }
 
     public void execute(String username) {
+        // Snapshot the network player list on the client thread, before doing HTTP work.
+        String onlineUuid = PlayerIdentity.findOnlineUuid(username);
         ClientTasks.runAsync(() -> {
             if (username == null || username.isEmpty()) {
                 ClientTasks.chat("Invalid player");
                 return;
             }
 
-            String key = username.toLowerCase();
+            String key = username.toLowerCase(Locale.ROOT);
             if (Additional.playerProfileList.containsKey(key)
                     && Additional.bedwarsStatsList.containsKey(key)) {
                 printStats(username);
                 return;
             }
 
-            String uuid = MojangAPIUtils.fetchUuid(username);
+            String uuid = onlineUuid != null ? onlineUuid : MojangAPIUtils.fetchUuid(username);
             if (uuid == null) {
                 ClientTasks.chat("Invalid player");
                 return;
@@ -56,7 +61,7 @@ public class BedwarsStatsCommand {
     }
 
     private void fetchAndPrintStatsLocked(String Username, String uuid) {
-        String key = Username.toLowerCase();
+        String key = Username.toLowerCase(Locale.ROOT);
 
         // fetch stats here
         boolean needProfile = !Additional.playerProfileList.containsKey(key);
@@ -81,6 +86,9 @@ public class BedwarsStatsCommand {
             final Bedwars fetchedStats = needStats
                     ? AbyssAPIUtils.parseBedwarsPlayerData(stjson)
                     : null;
+            // Both commands consume the same player JSON; keep both parsed results.
+            final Duels otherStats = !Additional.duelsStatsList.containsKey(key)
+                    ? AbyssAPIUtils.parseDuelsPlayerData(stjson) : null;
             final PlayerProfile fetchedProfile;
             boolean guildUnavailable = false;
 
@@ -100,6 +108,9 @@ public class BedwarsStatsCommand {
             boolean committed = StatsProviderUtils.commitIfCurrent(cacheGeneration, () -> {
                 if (needStats) {
                     Additional.bedwarsStatsList.put(key, fetchedStats);
+                }
+                if (otherStats != null) {
+                    Additional.duelsStatsList.put(key, otherStats);
                 }
                 if (needProfile) {
                     Additional.playerProfileList.put(key, fetchedProfile);
@@ -130,7 +141,7 @@ public class BedwarsStatsCommand {
     }
 
     private void printStats(String Username) {
-        PlayerProfile profile = Additional.playerProfileList.get(Username.toLowerCase());
+        PlayerProfile profile = Additional.playerProfileList.get(Username.toLowerCase(Locale.ROOT));
 
         if(profile == null) {
             ClientTasks.chat("Invalid player");
@@ -141,7 +152,7 @@ public class BedwarsStatsCommand {
         }
         String formattedName = profile.getDisplayName();
 
-        Bedwars bedwarsStats = Additional.bedwarsStatsList.get(Username.toLowerCase());
+        Bedwars bedwarsStats = Additional.bedwarsStatsList.get(Username.toLowerCase(Locale.ROOT));
 
         int bedwarsstar = bedwarsStats.getBedwarsStar();
         if (bedwarsstar == -1) {

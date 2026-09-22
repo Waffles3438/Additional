@@ -89,6 +89,7 @@ public class ModConfig extends Config {
     )
     public void clearCache() {
         StatsProviderUtils.invalidateCacheGeneration();
+        me.waffles.additional.api.MojangAPIUtils.clearCache();
         Additional.bedwarsStatsList.clear();
         Additional.duelsStatsList.clear();
         Additional.playerProfileList.clear();
