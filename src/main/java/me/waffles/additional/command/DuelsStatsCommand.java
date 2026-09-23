@@ -4,9 +4,10 @@ import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.Multithreading;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
+import com.mojang.authlib.GameProfile;
 import me.waffles.additional.Additional;
 import me.waffles.additional.api.AbyssAPIUtils;
-import me.waffles.additional.api.MojangAPIUtils;
+import me.waffles.additional.util.PlayerUuidResolver;
 import me.waffles.additional.api.StatsProviderUtils;
 import me.waffles.additional.playerData.Duels;
 import me.waffles.additional.playerData.PlayerProfile;
@@ -37,6 +38,7 @@ public class DuelsStatsCommand {
 
     @Main
     private void main(String username) {
+        GameProfile localProfile = PlayerUuidResolver.findLocalProfile(username);
         Multithreading.runAsync(() -> {
             if (username == null || username.isEmpty()) {
                 UChat.chat("Invalid player");
@@ -44,13 +46,14 @@ public class DuelsStatsCommand {
             }
 
             String key = username.toLowerCase();
-            if (Additional.playerProfileList.containsKey(key)
-                    && Additional.duelsStatsList.containsKey(key)) {
-                printStats(username);
+            PlayerProfile cachedProfile = Additional.playerProfileList.getIfPresent(key);
+            Duels cachedStats = Additional.duelsStatsList.getIfPresent(key);
+            if (cachedProfile != null && cachedStats != null) {
+                printStats(username, cachedProfile, cachedStats);
                 return;
             }
 
-            String uuid = MojangAPIUtils.fetchUuid(username);
+            String uuid = PlayerUuidResolver.INSTANCE.resolveUuid(username, localProfile);
             if (uuid == null) {
                 UChat.chat("Invalid player");
                 return;
@@ -71,8 +74,11 @@ public class DuelsStatsCommand {
         String key = Username.toLowerCase();
 
         // fetch stats here
-        boolean needProfile = !Additional.playerProfileList.containsKey(key);
-        boolean needStats = !Additional.duelsStatsList.containsKey(key);
+        // Keep snapshots so expiration during a request cannot invalidate printing.
+        PlayerProfile cachedProfile = Additional.playerProfileList.getIfPresent(key);
+        Duels cachedStats = Additional.duelsStatsList.getIfPresent(key);
+        boolean needProfile = cachedProfile == null;
+        boolean needStats = cachedStats == null;
 
         if (needProfile || needStats) {
             long cacheGeneration = StatsProviderUtils.captureCacheGeneration();
@@ -120,6 +126,12 @@ public class DuelsStatsCommand {
             if (!committed) {
                 return;
             }
+            if (needStats) {
+                cachedStats = fetchedStats;
+            }
+            if (needProfile) {
+                cachedProfile = fetchedProfile;
+            }
 
             if (playerData.getProvider() == StatsProviderUtils.Provider.SHMEADO) {
                 LOGGER.info("Using Shmeado instead of Abyss for {} Duels player data.", Username);
@@ -138,11 +150,10 @@ public class DuelsStatsCommand {
         }
 
         // print stats here
-        printStats(Username);
+        printStats(Username, cachedProfile, cachedStats);
     }
 
-    private void printStats(String Username) {
-        PlayerProfile profile = Additional.playerProfileList.get(Username.toLowerCase());
+    private void printStats(String Username, PlayerProfile profile, Duels duelsStats) {
 
         if(profile == null) {
             UChat.chat("Invalid player");
@@ -153,7 +164,6 @@ public class DuelsStatsCommand {
         }
         String formattedName = profile.getDisplayName();
 
-        Duels duelsStats = Additional.duelsStatsList.get(Username.toLowerCase());
         int duelsdeaths = duelsStats.getDuelsDeaths();
         if(duelsdeaths == -1) {
             UChat.chat(Username + " has never played Duels.");

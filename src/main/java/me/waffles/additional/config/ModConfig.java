@@ -91,23 +91,14 @@ public class ModConfig extends Config {
     )
     Runnable runnable = () -> {
         StatsProviderUtils.invalidateCacheGeneration();
-        Additional.bedwarsStatsList.clear();
-        Additional.duelsStatsList.clear();
-        Additional.playerProfileList.clear();
+        Additional.bedwarsStatsList.invalidateAll();
+        Additional.duelsStatsList.invalidateAll();
+        Additional.playerProfileList.invalidateAll();
         Notifications.INSTANCE.send("Additional", "Cleared player cache", 3000);
     };
 
-    @Slider(
-            name = "Amount of players cached",
-            min = 1,
-            max = 16,
-            step = 1,
-            category = "Stat Checking"
-    )
-    public static int maxCacheSize = 4;
-
     @Info(
-            text = "Restart Minecraft to apply changes",
+            text = "Stats are cached for 5 minutes. Expired stats refresh on your next lookup.",
             type = InfoType.INFO,
             category = "Stat Checking",
             size = OptionSize.DUAL

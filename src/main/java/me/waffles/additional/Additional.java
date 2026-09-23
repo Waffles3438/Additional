@@ -19,7 +19,8 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import me.waffles.additional.mixin.EntityLivingBaseAccessor;
 import me.waffles.additional.playerData.Bedwars;
 import me.waffles.additional.playerData.Duels;
-import me.waffles.additional.util.EldestRemovalMap;
+import com.google.common.cache.Cache;
+import me.waffles.additional.util.StatsCache;
 import me.waffles.additional.playerData.PlayerProfile;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
@@ -30,19 +31,21 @@ public class Additional {
     public static final String NAME = "@MOD_NAME@";
     public static final String VERSION = "@MOD_VERSION@";
 
+    private int cacheCleanupTicks;
+
     public static ModConfig config;
-    public static EldestRemovalMap<String, Duels> duelsStatsList;
-    public static EldestRemovalMap<String, Bedwars> bedwarsStatsList;
-    public static EldestRemovalMap<String, PlayerProfile> playerProfileList;
+    public static Cache<String, Duels> duelsStatsList;
+    public static Cache<String, Bedwars> bedwarsStatsList;
+    public static Cache<String, PlayerProfile> playerProfileList;
 
     @Mod.EventHandler
     public void onInit(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new NameTagESP());
         config = new ModConfig();
-        duelsStatsList = new EldestRemovalMap<>(ModConfig.maxCacheSize);
-        bedwarsStatsList = new EldestRemovalMap<>(ModConfig.maxCacheSize);
-        playerProfileList = new EldestRemovalMap<>(ModConfig.maxCacheSize);
+        duelsStatsList = StatsCache.create();
+        bedwarsStatsList = StatsCache.create();
+        playerProfileList = StatsCache.create();
         CommandManager.INSTANCE.addParser(new TabListPlayerNameArgumentParser());
         CommandManager.INSTANCE.registerCommand(new BedwarsStatsCommand());
         CommandManager.INSTANCE.registerCommand(new DuelsStatsCommand());
@@ -50,6 +53,13 @@ public class Additional {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent e) {
+        // Release expired entries even when no further stats commands are run.
+        if (e.phase == TickEvent.Phase.END && ++cacheCleanupTicks >= 1200) {
+            cacheCleanupTicks = 0;
+            bedwarsStatsList.cleanUp();
+            duelsStatsList.cleanUp();
+            playerProfileList.cleanUp();
+        }
         if (Minecraft.getMinecraft().thePlayer != null && ModConfig.ndj && e.phase.equals(TickEvent.Phase.START)) {
             if(((EntityLivingBaseAccessor) Minecraft.getMinecraft().thePlayer).getJumpTicks() > ModConfig.jumpTicks){
                 ((EntityLivingBaseAccessor) Minecraft.getMinecraft().thePlayer).setJumpTicks(ModConfig.jumpTicks);
