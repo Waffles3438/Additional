@@ -6,8 +6,8 @@ import com.google.common.cache.CacheBuilder;
 import com.mojang.authlib.GameProfile;
 import me.waffles.additional.api.MojangAPIUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.network.NetHandlerPlayClient;
-import net.minecraft.client.network.NetworkPlayerInfo;
+import net.minecraft.client.network.handler.ClientPlayNetworkHandler;
+import net.minecraft.client.network.PlayerInfo;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -38,16 +38,16 @@ public final class PlayerUuidResolver {
             return null;
         }
 
-        Minecraft minecraft = Minecraft.getMinecraft();
+        Minecraft minecraft = Minecraft.getInstance();
         GameProfile sessionProfile = minecraft.getSession().getProfile();
         if (matches(sessionProfile, username)) {
             return sessionProfile;
         }
 
-        NetHandlerPlayClient netHandler = minecraft.getNetHandler();
+        ClientPlayNetworkHandler netHandler = minecraft.getNetworkHandler();
         if (netHandler != null) {
-            for (NetworkPlayerInfo playerInfo : netHandler.getPlayerInfoMap()) {
-                GameProfile profile = playerInfo.getGameProfile();
+            for (PlayerInfo playerInfo : netHandler.getOnlinePlayers()) {
+                GameProfile profile = playerInfo.getProfile();
                 if (matches(profile, username)) {
                     return profile;
                 }

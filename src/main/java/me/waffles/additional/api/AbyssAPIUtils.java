@@ -1,6 +1,6 @@
 package me.waffles.additional.api;
 
-import cc.polyfrost.oneconfig.libs.universal.UChat;
+import me.waffles.additional.util.ClientTasks;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -158,7 +158,7 @@ public class AbyssAPIUtils {
                 );
             }
         } catch (Exception e) {
-            UChat.chat("Something broke in parsePlayerProfilePlayerData");
+            ClientTasks.chat("Something broke in parsePlayerProfilePlayerData");
             e.printStackTrace();
             return new PlayerProfile(
                     null,
@@ -335,7 +335,7 @@ public class AbyssAPIUtils {
                 );
             }
         } catch (Exception e) {
-            UChat.chat("Something broke in parseDuelsPlayerData!");
+            ClientTasks.chat("Something broke in parseDuelsPlayerData!");
             e.printStackTrace();
             return new Duels(
                     -1,
@@ -471,7 +471,7 @@ public class AbyssAPIUtils {
                 );
             }
         } catch (Exception e) {
-            UChat.chat("Something broke in parseBedwarsPlayerData!");
+            ClientTasks.chat("Something broke in parseBedwarsPlayerData!");
             e.printStackTrace();
             return new Bedwars(
                     -1,

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "additional",
+  "version": "${version}",
+  "name": "Additional",
+  "description": "Nametag additions, no jump delay, and Hypixel Bedwars and Duels stats.",
+  "authors": ["iAT3"],
+  "environment": "client",
+  "entrypoints": { "client": ["me.waffles.additional.Additional"] },
+  "mixins": ["mixins.additional.json"],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "1.8.9",
+    "java": ">=25",
+    "oneconfigv1": ">=${oneconfig_version}",
+    "osl-core": ">=0.10.0"
+  }
+}

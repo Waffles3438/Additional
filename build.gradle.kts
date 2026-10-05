@@ -1,38 +1,53 @@
-import dev.deftu.gradle.utils.GameSide
-
 plugins {
-    id("java")
-    id("dev.deftu.gradle.tools") version("2.69.+")
-    id("dev.deftu.gradle.tools.resources") version("2.69.+")
-    id("dev.deftu.gradle.tools.bloom") version("2.69.+")
-    id("dev.deftu.gradle.tools.shadow") version("2.69.+")
-    id("dev.deftu.gradle.tools.minecraft.loom") version("2.69.+")
+    java
+    id("fabric-loom") version "1.17.21"
+    id("ploceus") version "1.17.7"
 }
+
+group = "me.waffles"
+version = "${property("mod.version")}+mc${property("minecraft.version")}-ornithe"
+base.archivesName.set(property("mod.id").toString())
 
 repositories {
     mavenCentral()
     maven("https://repo.polyfrost.org/releases")
-    maven("https://repo.polyfrost.org/snapshots")
+    maven("https://maven.cloverclient.com/releases")
+    maven("https://maven.fabricmc.net")
+    maven("https://libraries.minecraft.net")
+    maven("https://maven.google.com")
 }
 
+ploceus.setIntermediaryGeneration(2)
+
 dependencies {
-    compileOnly("cc.polyfrost:oneconfig-1.8.9-forge:0.2.2-alpha+")
-
-    shade("cc.polyfrost:oneconfig-wrapper-launchwrapper:1.0.0-beta+")
-    implementation("cc.polyfrost:oneconfig-wrapper-launchwrapper:1.0.0-beta+")
-
-    compileOnly("org.spongepowered:mixin:0.7.11-SNAPSHOT")
-
+    minecraft("com.mojang:minecraft:${property("minecraft.version")}")
+    mappings(ploceus.featherMappings(property("feather.build").toString()))
+    modImplementation("net.fabricmc:fabric-loader:${property("loader.version")}")
+    ploceus.dependOsl(property("osl.version").toString())
+    modImplementation("org.polyfrost.oneconfig:1.8.9-ornithe:${property("oneconfig.version")}")
     testImplementation("junit:junit:4.13.2")
 }
 
-toolkitLoomHelper {
-    useMixinRefMap(modData.id)
-    useForgeMixin(modData.id)
+// OneConfig's Ornithe platform uses Pylon/LWJGL 3.
+configurations.configureEach { exclude(group = "org.lwjgl.lwjgl") }
 
-    useTweaker("cc.polyfrost.oneconfig.loader.stage0.LaunchWrapperTweaker")
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(25))
+    withSourcesJar()
+}
 
-    useDevAuth("+")
-    useProperty("mixin.debug.export", "true", GameSide.CLIENT)
-    disableRunConfigs(GameSide.SERVER)
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+    options.release.set(25)
+}
+
+tasks.processResources {
+    val metadata = mapOf("version" to project.version, "oneconfig_version" to project.property("oneconfig.version"))
+    inputs.properties(metadata)
+    filesMatching("fabric.mod.json") { expand(metadata) }
+}
+
+loom {
+    runs.named("client") { property("mixin.debug.countInjections", "true") }
+    runs.remove(runs.getByName("server"))
 }
