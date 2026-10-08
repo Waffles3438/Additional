@@ -7,7 +7,6 @@ import me.waffles.additional.mixin.EntityLivingBaseAccessor;
 import me.waffles.additional.playerData.Bedwars;
 import me.waffles.additional.playerData.Duels;
 import me.waffles.additional.playerData.PlayerProfile;
-import me.waffles.additional.render.NameTagESP;
 import me.waffles.additional.util.BotUtils;
 import me.waffles.additional.util.StatsCache;
 import net.fabricmc.api.ClientModInitializer;
@@ -52,6 +51,5 @@ public class Additional implements ClientModInitializer {
     public static void worldChanged() {
         // Includes lobby/game transfers and disconnects.
         BotUtils.clearCache();
-        NameTagESP.clearFrame();
     }
 }

@@ -12,6 +12,8 @@ import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Locale;
+
 public class BedwarsStatsCommand {
     private static final Logger LOGGER = LogManager.getLogger("Additional");
 
@@ -33,7 +35,7 @@ public class BedwarsStatsCommand {
                 return;
             }
 
-            String key = username.toLowerCase();
+            String key = username.toLowerCase(Locale.ROOT);
             PlayerProfile cachedProfile = Additional.playerProfileList.getIfPresent(key);
             Bedwars cachedStats = Additional.bedwarsStatsList.getIfPresent(key);
             if (cachedProfile != null && cachedStats != null) {
@@ -59,7 +61,7 @@ public class BedwarsStatsCommand {
     }
 
     private void fetchAndPrintStatsLocked(String Username, String uuid) {
-        String key = Username.toLowerCase();
+        String key = Username.toLowerCase(Locale.ROOT);
 
         // fetch stats here
         // Keep snapshots so expiration during a request cannot invalidate printing.
@@ -169,16 +171,18 @@ public class BedwarsStatsCommand {
         double bedwarsfkdr = bedwarsStats.getBedwarsFKDR();
         double bedwarswlr = bedwarsStats.getBedwarsWLR();
         double bedwarsbblr = bedwarsStats.getBedwarsBBLR();
-        ClientTasks.chat("§9------------------------------------------");
-        ClientTasks.chat(getFormattedRank(bedwarsstar) + " " + formattedName + " " + formattedGuildTag);
-        ClientTasks.chat("FKDR: " + formatColors(bedwarsfkdr, 15));
-        ClientTasks.chat("Final kills: " + formatColors(bedwarsfk, 25000));
-        ClientTasks.chat("WLR: " + formatColors(bedwarswlr, 5));
-        ClientTasks.chat("Wins: " + formatColors(bedwarsw, 20000));
-        ClientTasks.chat("BBLR: " + formatColors(bedwarsbblr, 5));
-        ClientTasks.chat("Beds: " + formatColors(bedwarsbb, 30000));
-        if(bedwarsws != -1) ClientTasks.chat("Winstreak: " + bedwarsws);
-        ClientTasks.chat("§9------------------------------------------");
+        ClientTasks.chatLines(
+                "§9------------------------------------------",
+                getFormattedRank(bedwarsstar) + " " + formattedName + " " + formattedGuildTag,
+                "FKDR: " + formatColors(bedwarsfkdr, 15),
+                "Final kills: " + formatColors(bedwarsfk, 25000),
+                "WLR: " + formatColors(bedwarswlr, 5),
+                "Wins: " + formatColors(bedwarsw, 20000),
+                "BBLR: " + formatColors(bedwarsbblr, 5),
+                "Beds: " + formatColors(bedwarsbb, 30000),
+                bedwarsws != -1 ? "Winstreak: " + bedwarsws : null,
+                "§9------------------------------------------"
+        );
     }
 
     static String formateName(PlayerProfile profile, String formattedName) {

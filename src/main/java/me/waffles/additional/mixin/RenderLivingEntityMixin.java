@@ -20,13 +20,18 @@ public class RenderLivingEntityMixin {
 
     @Inject(
             method = "renderNameTag(Lnet/minecraft/entity/living/LivingEntity;DDD)V",
-            at = @At("HEAD")
+            at = @At("HEAD"), cancellable = true
     )
-    private void markEspRendered(LivingEntity entity, double x, double y, double z, CallbackInfo ci) {
-        // Avoid drawing labels twice during the late through-wall pass.
-        if (ModConfig.masterSwitch && ModConfig.nametagsThroughWalls && entity instanceof PlayerEntity) {
-            NameTagESP.renderedPlayers.add(entity.getUuid());
-        }
+    private void deferEspLabel(LivingEntity entity, double x, double y, double z, CallbackInfo ci) {
+        // Draw eligible player labels once, after terrain, translucent blocks and
+        // weather. The late pass calls this renderer again with renderingEsp set.
+        if (NameTagESP.shouldDefer(entity)) ci.cancel();
+    }
+
+    @Redirect(method = "renderNameTag(Lnet/minecraft/entity/living/LivingEntity;DDD)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/platform/GlStateManager;depthMask(Z)V"))
+    private void keepSneakingLabelDepthReadOnly(boolean mask) {
+        GlStateManager.depthMask(mask && !NameTagESP.isRenderingEsp());
     }
 
     @Inject(

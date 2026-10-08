@@ -12,11 +12,9 @@ import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Locale;
 import java.util.NavigableMap;
 import java.util.TreeMap;
-
-// debugging
-//import java.io.IOException;
 
 public class DuelsStatsCommand {
     private static final Logger LOGGER = LogManager.getLogger("Additional");
@@ -39,7 +37,7 @@ public class DuelsStatsCommand {
                 return;
             }
 
-            String key = username.toLowerCase();
+            String key = username.toLowerCase(Locale.ROOT);
             PlayerProfile cachedProfile = Additional.playerProfileList.getIfPresent(key);
             Duels cachedStats = Additional.duelsStatsList.getIfPresent(key);
             if (cachedProfile != null && cachedStats != null) {
@@ -65,7 +63,7 @@ public class DuelsStatsCommand {
     }
 
     private void fetchAndPrintStatsLocked(String Username, String uuid) {
-        String key = Username.toLowerCase();
+        String key = Username.toLowerCase(Locale.ROOT);
 
         // fetch stats here
         // Keep snapshots so expiration during a request cannot invalidate printing.
@@ -174,18 +172,19 @@ public class DuelsStatsCommand {
         int duelswins = duelsStats.getDuelsWins();
         double duelswlr = duelsStats.getDuelsWLR();
         String level = duelsStats.getLevel();
-        ClientTasks.chat("§9------------------------------------------");
-        ClientTasks.chat(getPlayerDivision(duelswins) + formattedName + " " + formattedGuildTag);
-        ClientTasks.chat("Level: " + level);
-        ClientTasks.chat("WLR: " + formatColors(duelswlr, 10));
-        ClientTasks.chat("Wins: " + formatColors(duelswins, 20000));
-        ClientTasks.chat("KDR: " + formatColors(duelskdr, 10));
-        ClientTasks.chat("Kills: " + formatColors(duelskills, 20000));
-        if(duelscws != -1 && duelsbws != -1) {
-            ClientTasks.chat("Current Winstreak: " + duelscws);
-            ClientTasks.chat("Best Winstreak: " + duelsbws);
-        }
-        ClientTasks.chat("§9------------------------------------------");
+        boolean hasWinstreaks = duelscws != -1 && duelsbws != -1;
+        ClientTasks.chatLines(
+                "§9------------------------------------------",
+                getPlayerDivision(duelswins) + formattedName + " " + formattedGuildTag,
+                "Level: " + level,
+                "WLR: " + formatColors(duelswlr, 10),
+                "Wins: " + formatColors(duelswins, 20000),
+                "KDR: " + formatColors(duelskdr, 10),
+                "Kills: " + formatColors(duelskills, 20000),
+                hasWinstreaks ? "Current Winstreak: " + duelscws : null,
+                hasWinstreaks ? "Best Winstreak: " + duelsbws : null,
+                "§9------------------------------------------"
+        );
     }
 
     public String fetchPlayerData(String uuid) {

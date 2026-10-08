@@ -16,4 +16,17 @@ public final class ClientTasks {
             return null;
         });
     }
+
+    /** Queue one complete reply so concurrent stat lookups cannot interleave lines. */
+    public static void chatLines(String... messages) {
+        Minecraft client = Minecraft.getInstance();
+        client.executeTask(() -> {
+            if (client.player != null) {
+                for (String message : messages) {
+                    if (message != null) client.player.addMessage(new LiteralText(message));
+                }
+            }
+            return null;
+        });
+    }
 }
