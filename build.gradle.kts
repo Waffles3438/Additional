@@ -48,6 +48,7 @@ tasks.processResources {
 }
 
 loom {
+    accessWidenerPath.set(file("src/main/resources/additional.accesswidener"))
     runs.named("client") { property("mixin.debug.countInjections", "true") }
     runs.remove(runs.getByName("server"))
 }

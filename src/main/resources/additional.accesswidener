@@ -1,0 +1,13 @@
+accessWidener v2 named
+
+# Read Minecraft's state cache; restoration still goes through GlStateManager.
+accessible class net/minecraft/client/render/platform/GlStateManager$GlState
+accessible class net/minecraft/client/render/platform/GlStateManager$Blend
+accessible class net/minecraft/client/render/platform/GlStateManager$Depth
+accessible class net/minecraft/client/render/platform/GlStateManager$Texture
+accessible field net/minecraft/client/render/platform/GlStateManager$GlState enabled Z
+accessible field net/minecraft/client/render/platform/GlStateManager LIGHTING Lnet/minecraft/client/render/platform/GlStateManager$GlState;
+accessible field net/minecraft/client/render/platform/GlStateManager BLEND Lnet/minecraft/client/render/platform/GlStateManager$Blend;
+accessible field net/minecraft/client/render/platform/GlStateManager DEPTH Lnet/minecraft/client/render/platform/GlStateManager$Depth;
+accessible field net/minecraft/client/render/platform/GlStateManager texture I
+accessible field net/minecraft/client/render/platform/GlStateManager TEXTURES [Lnet/minecraft/client/render/platform/GlStateManager$Texture;

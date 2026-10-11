@@ -27,7 +27,7 @@ public class RenderMixin {
             )
     )
     private double extendNametagRange(Entity entityIn, Entity instance) {
-        if(ModConfig.extendNametagRange && !BotUtils.isBot(entityIn) && ModConfig.masterSwitch) {
+        if(ModConfig.masterSwitch && ModConfig.extendNametagRange && !BotUtils.isBot(entityIn)) {
             return 0.0D;
         }
         return entityIn.squaredDistanceTo(instance);

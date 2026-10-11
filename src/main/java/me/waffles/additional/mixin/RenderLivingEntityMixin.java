@@ -24,7 +24,7 @@ public class RenderLivingEntityMixin {
     )
     private void deferEspLabel(LivingEntity entity, double x, double y, double z, CallbackInfo ci) {
         // Draw eligible player labels once, after terrain, translucent blocks and
-        // weather. The late pass calls this renderer again with renderingEsp set.
+        // weather. The late pass calls this renderer again with the ESP pass active.
         if (NameTagESP.shouldDefer(entity)) ci.cancel();
     }
 
@@ -32,6 +32,14 @@ public class RenderLivingEntityMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/platform/GlStateManager;depthMask(Z)V"))
     private void keepSneakingLabelDepthReadOnly(boolean mask) {
         GlStateManager.depthMask(mask && !NameTagESP.isRenderingEsp());
+    }
+
+    // Vanilla has accepted visibility and range before reaching alphaFunc.
+    // Delay per-player light calculation until here instead of repeating those checks.
+    @Inject(method = "renderNameTag(Lnet/minecraft/entity/living/LivingEntity;DDD)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/platform/GlStateManager;alphaFunc(IF)V"))
+    private void prepareEspLabel(LivingEntity entity, double x, double y, double z, CallbackInfo ci) {
+        NameTagESP.prepareLabel(entity);
     }
 
     @Inject(
@@ -74,7 +82,7 @@ public class RenderLivingEntityMixin {
             )
     )
     private AbstractTeam showInvis(LivingEntity instance) {
-        if(ModConfig.invisNametags && !BotUtils.isBot(instance) && ModConfig.masterSwitch) {
+        if(ModConfig.masterSwitch && ModConfig.invisNametags && !BotUtils.isBot(instance)) {
             return null;
         }
         return instance.getScoreboardTeam();
@@ -88,8 +96,8 @@ public class RenderLivingEntityMixin {
             )
     )
     private boolean cancel(LivingEntity instance) {
-        if(BotUtils.isBot(instance)) return instance.isSneaking();
-        return !(ModConfig.nametagsOnShift && ModConfig.masterSwitch) && instance.isSneaking();
+        return instance.isSneaking()
+                && (!ModConfig.masterSwitch || !ModConfig.nametagsOnShift || BotUtils.isBot(instance));
     }
 
     @Redirect(

@@ -7,6 +7,7 @@
   "client": [
     "RenderLivingEntityMixin",
     "EntityLivingBaseAccessor",
+    "EntityRenderDispatcherMixin",
     "RenderMixin",
     "MinecraftMixin",
     "GameRendererMixin"

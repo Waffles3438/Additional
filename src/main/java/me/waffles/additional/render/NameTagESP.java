@@ -12,10 +12,10 @@ import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.platform.GLX;
 import net.minecraft.client.render.platform.GlStateManager;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.living.LivingEntity;
 import net.minecraft.entity.living.player.PlayerEntity;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL14;
 
 import java.nio.FloatBuffer;
@@ -26,13 +26,35 @@ public class NameTagESP {
     private final Minecraft mc = Minecraft.getInstance();
     private final List<PlayerEntity> candidates = new ArrayList<>(16);
     private final RenderState previous = new RenderState();
-    private Culler frustum;
-    private static boolean renderingEsp;
+    private Culler worldFrustum;
+    private Culler fallbackFrustum;
+    private float passTickDelta;
+    private static NameTagESP activePass;
+    private static boolean dispatcherPrepared;
 
-    public static boolean isRenderingEsp() { return renderingEsp; }
+    public static boolean isRenderingEsp() { return activePass != null; }
+
+    public void beginWorldPass() {
+        // Each anaglyph eye needs its own prepared frustum and dispatcher state.
+        worldFrustum = null;
+        dispatcherPrepared = false;
+    }
+
+    public void setWorldFrustum(Culler culler) { worldFrustum = culler; }
+
+    public static void markDispatcherPrepared() { dispatcherPrepared = true; }
+
+    public static void prepareLabel(LivingEntity entity) {
+        if (activePass != null) activePass.prepareAcceptedLabel(entity);
+    }
+
+    private void prepareAcceptedLabel(LivingEntity entity) {
+        int light = entity.isOnFire() ? 15728880 : entity.getLightLevel(passTickDelta);
+        GLX.multiTexCoord2f(GLX.GL_TEXTURE1, light % 65536, light / 65536);
+    }
 
     public static boolean shouldDefer(Entity entity) {
-        return !renderingEsp && ModConfig.masterSwitch && ModConfig.nametagsThroughWalls
+        return !isRenderingEsp() && ModConfig.masterSwitch && ModConfig.nametagsThroughWalls
                 && entity instanceof PlayerEntity && !BotUtils.isBot(entity);
     }
 
@@ -51,7 +73,7 @@ public class NameTagESP {
 
         boolean extendedRange = ModConfig.extendNametagRange;
         boolean showSneaking = ModConfig.nametagsOnShift;
-        boolean frustumPrepared = false;
+        Culler frustum = worldFrustum;
         List<PlayerEntity> players = mc.world.players;
         for (int i = 0, count = players.size(); i < count; i++) {
             PlayerEntity player = players.get(i);
@@ -62,43 +84,47 @@ public class NameTagESP {
             double rangeSquared = extendedRange ? 65536.0
                     : (!showSneaking && player.isSneaking() ? 1024.0 : 4096.0);
             if (player.squaredDistanceTo(camera) >= rangeSquared || BotUtils.isBot(player)) continue;
-            if (!frustumPrepared) {
-                if (frustum == null) frustum = new FrustumCuller();
+            if (frustum == null) {
+                // Fallback for render paths that bypass vanilla's setupRender.
+                if (fallbackFrustum == null) fallbackFrustum = new FrustumCuller();
                 else Frustum.getInstance();
+                frustum = fallbackFrustum;
                 frustum.prepare(px, py, pz);
-                frustumPrepared = true;
             }
             if (frustum.isVisible(player.getShape())) candidates.add(player);
         }
         if (candidates.isEmpty()) return;
 
         EntityRenderDispatcher dispatcher = mc.getEntityRenderDispatcher();
-        dispatcher.prepare(mc.world, mc.textRenderer, camera, mc.targetEntity, mc.options, tickDelta);
+        // WorldRenderer normally prepares it already; retain the fallback for
+        // debug-camera rendering and the first frames after a world change.
+        if (!dispatcherPrepared) {
+            dispatcher.prepare(mc.world, mc.textRenderer, camera, mc.targetEntity, mc.options, tickDelta);
+        }
+        passTickDelta = tickDelta;
+        // Keep the wrapper outside renderer calls so other mods can balance
+        // their own matrix/state changes around the whole native method.
         previous.capture();
         GlStateManager.pushMatrix();
-        mc.gameRenderer.enableLightMap();
+        activePass = this;
         try {
-            renderingEsp = true;
-            // Vanilla re-enables depth testing for opaque text (and keeps it on
-            // for sneaking labels). ALWAYS covers both paths without a huge
-            // polygon offset. Label mixins keep depth writes off during this pass.
+            mc.gameRenderer.enableLightMap();
+            // Vanilla re-enables depth testing for opaque and sneaking text.
+            // ALWAYS covers both; label mixins prevent depth writes in this pass.
             GlStateManager.depthFunc(GL11.GL_ALWAYS);
             GlStateManager.depthMask(false);
             for (int i = 0, count = candidates.size(); i < count; i++) {
                 PlayerEntity player = candidates.get(i);
-                int light = player.isOnFire() ? 15728880 : player.getLightLevel(tickDelta);
-                GLX.multiTexCoord2f(GLX.GL_TEXTURE1, light % 65536, light / 65536);
+                EntityRenderer<?> renderer = dispatcher.getRenderer(player);
+                if (!(renderer instanceof LivingEntityRenderer)) continue;
                 double x = player.prevX + (player.x - player.prevX) * tickDelta - px;
                 double y = player.prevY + (player.y - player.prevY) * tickDelta - py;
                 double z = player.prevZ + (player.z - player.prevZ) * tickDelta - pz;
-                EntityRenderer<?> renderer = dispatcher.getRenderer(player);
-                if (renderer instanceof LivingEntityRenderer) {
-                    // The normal renderer preserves scoreboard rules and inline nametag mods.
-                    ((LivingEntityRenderer<PlayerEntity>) renderer).renderNameTag(player, x, y, z);
-                }
+                // The normal renderer preserves scoreboard rules and inline nametag mods.
+                ((LivingEntityRenderer<PlayerEntity>) renderer).renderNameTag(player, x, y, z);
             }
         } finally {
-            renderingEsp = false;
+            activePass = null;
             // Keep capacity for the next frame without retaining departed players.
             candidates.clear();
             previous.restoreLightmap();
@@ -116,22 +142,26 @@ public class NameTagESP {
         private final FloatBuffer light = BufferUtils.createFloatBuffer(4);
 
         private void capture() {
-            activeTexture = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
-            lighting = GL11.glIsEnabled(GL11.GL_LIGHTING);
-            blend = GL11.glIsEnabled(GL11.GL_BLEND);
-            depth = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
-            depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
-            depthFunc = GL11.glGetInteger(GL11.GL_DEPTH_FUNC);
-            texture = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
-            srcRgb = GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB);
-            dstRgb = GL11.glGetInteger(GL14.GL_BLEND_DST_RGB);
+            // These states are tracked by Minecraft and restored through the
+            // same cache. Color and light coordinates can be changed directly
+            // by vertex/renderer code. Vanilla blendFunc also leaves its cached
+            // alpha factors stale, so query those four actual GL values.
+            activeTexture = GLX.GL_TEXTURE0 + GlStateManager.texture;
+            lighting = GlStateManager.LIGHTING.enabled;
+            blend = GlStateManager.BLEND.state.enabled;
+            depth = GlStateManager.DEPTH.state.enabled;
+            depthMask = GlStateManager.DEPTH.mask;
+            depthFunc = GlStateManager.DEPTH.func;
+            texture = GlStateManager.TEXTURES[0].state.enabled;
+            lightmapTexture = GlStateManager.TEXTURES[1].state.enabled;
+            srcRgb = GlStateManager.BLEND.sfactorRGB;
+            dstRgb = GlStateManager.BLEND.dfactorRGB;
             srcAlpha = GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA);
             dstAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
             color.clear();
             light.clear();
             GL11.glGetFloatv(GL11.GL_CURRENT_COLOR, color);
             GlStateManager.activeTexture(GLX.GL_TEXTURE1);
-            lightmapTexture = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
             GL11.glGetFloatv(GL11.GL_CURRENT_TEXTURE_COORDS, light);
             GlStateManager.activeTexture(activeTexture);
         }
