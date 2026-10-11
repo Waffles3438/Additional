@@ -94,7 +94,7 @@ public class ModConfig extends Config {
         Additional.bedwarsStatsList.invalidateAll();
         Additional.duelsStatsList.invalidateAll();
         Additional.playerProfileList.invalidateAll();
-        Notifications.info("Additional", "Cleared player cache", 3f);
+        Notifications.info("Additional", "Cleared player cache", 3000f);
     }
 
 
