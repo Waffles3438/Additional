@@ -94,13 +94,13 @@ public class ModConfig extends Config {
         Additional.bedwarsStatsList.invalidateAll();
         Additional.duelsStatsList.invalidateAll();
         Additional.playerProfileList.invalidateAll();
-        Notifications.info("Additional", "Cleared player cache", 2f);
+        Notifications.info("Additional", "Cleared player cache", 3f);
     }
 
 
     private static void toggleNametags() {
         Additional.config.getProperty("masterSwitch").setAs(!masterSwitch);
-        Notifications.info("Additional", (masterSwitch ? "Enabled" : "Disabled") + " nametag additions", 2f);
+        Notifications.info("Additional", (masterSwitch ? "Enabled" : "Disabled") + " nametag additions", 3f);
     }
 
     public ModConfig() {
