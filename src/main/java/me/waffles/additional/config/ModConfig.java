@@ -100,7 +100,7 @@ public class ModConfig extends Config {
 
     private static void toggleNametags() {
         Additional.config.getProperty("masterSwitch").setAs(!masterSwitch);
-        Notifications.info("Additional", (masterSwitch ? "Enabled" : "Disabled") + " nametag additions", 3f);
+        Notifications.info("Additional", (masterSwitch ? "Enabled" : "Disabled") + " nametag additions", 3000f);
     }
 
     public ModConfig() {
