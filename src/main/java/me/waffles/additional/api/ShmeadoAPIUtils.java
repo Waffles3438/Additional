@@ -7,6 +7,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ShmeadoAPIUtils {
+    private static final Pattern BEDWARS_OBJECT = Pattern.compile("bedwars\\s*:\\s*\\{");
+    private static final Pattern DUELS_OBJECT = Pattern.compile("duels\\s*:\\s*\\{");
     private static final String BASE_URL = "https://shmeado.club/player/stats/%s/";
     private static final String GUILD_URL = "https://shmeado.club/player/guild/%s/";
     private static final String USER_AGENT = "node-ao/2.0.3";
@@ -81,12 +83,12 @@ public class ShmeadoAPIUtils {
 
         JsonObject stats = new JsonObject();
 
-        JsonObject bedwars = sanitizeToJson(extractJsObject(page, "bedwars"));
+        JsonObject bedwars = sanitizeToJson(extractJsObject(page, BEDWARS_OBJECT));
         if (bedwars != null) {
             stats.add("Bedwars", copyNumericFields(bedwars));
         }
 
-        JsonObject duels = sanitizeToJson(extractJsObject(page, "duels"));
+        JsonObject duels = sanitizeToJson(extractJsObject(page, DUELS_OBJECT));
         if (duels != null) {
             stats.add("Duels", copyNumericFields(duels));
         }
@@ -195,8 +197,8 @@ public class ShmeadoAPIUtils {
         }
     }
 
-    private static String extractJsObject(String page, String key) {
-        Matcher matcher = Pattern.compile(Pattern.quote(key) + "\\s*:\\s*\\{").matcher(page);
+    private static String extractJsObject(String page, Pattern keyPattern) {
+        Matcher matcher = keyPattern.matcher(page);
         if (!matcher.find()) {
             return null;
         }

@@ -3,6 +3,7 @@ package me.waffles.additional.util;
 import com.google.common.base.Ticker;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.mojang.authlib.GameProfile;
 import me.waffles.additional.api.MojangAPIUtils;
 import net.minecraft.client.Minecraft;
@@ -11,6 +12,7 @@ import net.minecraft.client.network.PlayerInfo;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -74,12 +76,24 @@ public final class PlayerUuidResolver {
             return cachedUuid;
         }
 
-        String uuid = externalLookup.apply(username);
-        if (uuid != null) {
-            uuidCache.put(key, uuid);
+        try {
+            // Guava shares an in-flight load across simultaneous /bw and /d calls.
+            return uuidCache.get(key, () -> {
+                String uuid = externalLookup.apply(username);
+                if (uuid == null) throw UUID_UNAVAILABLE;
+                return uuid;
+            });
+        } catch (ExecutionException e) {
+            if (e.getCause() == UUID_UNAVAILABLE) return null;
+            throw new IllegalStateException(e.getCause());
+        } catch (UncheckedExecutionException e) {
+            throw (RuntimeException) e.getCause();
         }
-        return uuid;
     }
+
+    private static final Exception UUID_UNAVAILABLE = new Exception() {
+        @Override public synchronized Throwable fillInStackTrace() { return this; }
+    };
 
     private static boolean isValidUsername(String username) {
         return username != null && USERNAME_PATTERN.matcher(username).matches();

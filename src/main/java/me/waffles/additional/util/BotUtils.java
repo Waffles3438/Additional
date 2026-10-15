@@ -6,30 +6,31 @@ import net.minecraft.client.network.PlayerInfo;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.living.player.PlayerEntity;
 
-import java.util.Map;
+import me.waffles.additional.render.PlayerNametagCache;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public class BotUtils {
 
-    // Retain concurrent access for rendering and world-transition hooks.
-    private static final Map<UUID, Boolean> botCache = new ConcurrentHashMap<>();
+    private static volatile long cacheGeneration;
 
     private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-zA-Z0-9_]");
 
     public static boolean isBot(Entity entity) {
         if (!(entity instanceof PlayerEntity)) return true;
         PlayerEntity player = (PlayerEntity) entity;
-        UUID uuid = player.getUuid();
+        PlayerNametagCache cache = (PlayerNametagCache) player;
+        long generation = cacheGeneration;
 
-        Boolean cached = botCache.get(uuid);
+        Boolean cached = cache.additional$getBot(generation);
         if (cached != null) {
             return cached;
         }
 
+        UUID uuid = player.getUuid();
+
         if (uuid.version() == 2) {
-            botCache.put(uuid, true);
+            cache.additional$setBot(generation, true);
             return true;
         }
 
@@ -52,11 +53,11 @@ public class BotUtils {
         String name = info.getProfile().getName();
         boolean result = name == null || NON_ALPHANUMERIC.matcher(name).find();
 
-        botCache.put(uuid, result);
+        cache.additional$setBot(generation, result);
         return result;
     }
 
     public static void clearCache() {
-        botCache.clear();
+        cacheGeneration++;
     }
 }

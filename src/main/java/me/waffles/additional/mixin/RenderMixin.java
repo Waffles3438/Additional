@@ -2,7 +2,7 @@ package me.waffles.additional.mixin;
 
 import me.waffles.additional.util.BotUtils;
 import me.waffles.additional.render.NameTagESP;
-import net.minecraft.client.render.platform.GlStateManager;
+import net.minecraft.client.render.TextRenderer;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.entity.Entity;
 import me.waffles.additional.config.ModConfig;
@@ -14,9 +14,9 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class RenderMixin {
 
     @Redirect(method = "renderNameTag(Lnet/minecraft/entity/Entity;Ljava/lang/String;DDDI)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/platform/GlStateManager;depthMask(Z)V"))
-    private void keepEspLabelDepthReadOnly(boolean mask) {
-        GlStateManager.depthMask(mask && !NameTagESP.isRenderingEsp());
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/TextRenderer;getWidth(Ljava/lang/String;)I"))
+    private int additional$reuseLabelWidth(TextRenderer renderer, String text) {
+        return NameTagESP.getTextWidth(renderer, text);
     }
 
     @Redirect(

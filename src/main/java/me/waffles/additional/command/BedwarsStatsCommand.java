@@ -2,6 +2,7 @@ package me.waffles.additional.command;
 
 import me.waffles.additional.util.ClientTasks;
 import com.mojang.authlib.GameProfile;
+import com.google.gson.JsonObject;
 import me.waffles.additional.Additional;
 import me.waffles.additional.playerData.Bedwars;
 import me.waffles.additional.api.AbyssAPIUtils;
@@ -85,7 +86,7 @@ public class BedwarsStatsCommand {
                 return;
             }
 
-            String stjson = playerData.getJson();
+            JsonObject stjson = playerData.getData();
             final Bedwars fetchedStats = needStats
                     ? AbyssAPIUtils.parseBedwarsPlayerData(stjson)
                     : null;
@@ -94,9 +95,9 @@ public class BedwarsStatsCommand {
 
             if (needProfile) {
                 StatsProviderUtils.ResourceResult guildData = profileData.getGuild();
-                String guild = "{}";
+                JsonObject guild = new JsonObject();
                 if (guildData.isSuccess()) {
-                    guild = guildData.getJson();
+                    guild = guildData.getData();
                 } else if (guildData.isUnavailable()) {
                     guildUnavailable = true;
                 }

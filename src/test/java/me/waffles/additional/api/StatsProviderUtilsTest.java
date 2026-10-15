@@ -21,6 +21,32 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class StatsProviderUtilsTest {
+    @Test
+    public void validatedResponseFeedsStatsAndProfileWithoutChangingData() {
+        String player = "{\"player\":{\"displayname\":\"Player\",\"newPackageRank\":\"VIP\","
+                + "\"achievements\":{\"bedwars_level\":12},\"stats\":{"
+                + "\"Bedwars\":{\"final_kills_bedwars\":10,\"final_deaths_bedwars\":2},"
+                + "\"Duels\":{\"kills\":5,\"deaths\":2,\"wins\":12,\"losses\":3}}}}";
+        FakeClient client = new FakeClient();
+        client.responses(StatsProviderUtils.ResourceType.PLAYER, StatsProviderUtils.Provider.ABYSS, player);
+        client.responses(StatsProviderUtils.ResourceType.GUILD, StatsProviderUtils.Provider.ABYSS,
+                "{\"tag\":\"CACHE\",\"tagColor\":\"GOLD\"}");
+        StatsProviderUtils.ProfileData result = coordinator(client).fetch("Player", "uuid", true);
+        var data = result.getPlayer().getData();
+        String original = data.toString();
+        var bedwars = AbyssAPIUtils.parseBedwarsPlayerData(data);
+        var duels = AbyssAPIUtils.parseDuelsPlayerData(data);
+        var profile = AbyssAPIUtils.parsePlayerProfilePlayerData(data, result.getGuild().getData());
+        assertEquals(12, bedwars.getBedwarsStar());
+        assertEquals(5.0, bedwars.getBedwarsFKDR(), 0.0);
+        assertEquals(2.5, duels.getDuelsKDR(), 0.0);
+        assertEquals(4.0, duels.getDuelsWLR(), 0.0);
+        assertEquals("Player", profile.getDisplayName());
+        assertEquals("§a[VIP]", profile.getRank());
+        assertEquals("§6[CACHE]", profile.getGuildTag());
+        assertEquals(original, data.toString());
+    }
+
     private ExecutorService executor;
     private RecordingSleeper sleeper;
 

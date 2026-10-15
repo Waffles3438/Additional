@@ -139,8 +139,11 @@ public class AbyssAPIUtils {
     }
 
     public static PlayerProfile parsePlayerProfilePlayerData(String json, String guild) {
-        JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
-        JsonObject guildObject = new JsonParser().parse(guild).getAsJsonObject();
+        return parsePlayerProfilePlayerData(new JsonParser().parse(json).getAsJsonObject(),
+                new JsonParser().parse(guild).getAsJsonObject());
+    }
+
+    public static PlayerProfile parsePlayerProfilePlayerData(JsonObject rootObject, JsonObject guildObject) {
 
 //        saveJsonObject(rootObject, "blank"); // debugging stuff
 
@@ -313,7 +316,10 @@ public class AbyssAPIUtils {
     }
 
     public static Duels parseDuelsPlayerData(String json) {
-        JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
+        return parseDuelsPlayerData(new JsonParser().parse(json).getAsJsonObject());
+    }
+
+    public static Duels parseDuelsPlayerData(JsonObject rootObject) {
         JsonObject duelsStats, profile;
 
         try {
@@ -442,7 +448,10 @@ public class AbyssAPIUtils {
     }
 
     public static Bedwars parseBedwarsPlayerData(String json) {
-        JsonObject rootObject = new JsonParser().parse(json).getAsJsonObject();
+        return parseBedwarsPlayerData(new JsonParser().parse(json).getAsJsonObject());
+    }
+
+    public static Bedwars parseBedwarsPlayerData(JsonObject rootObject) {
 //        saveJsonObject(rootObject, "player-data.json"); debugging stuff
 
         JsonObject achievements;

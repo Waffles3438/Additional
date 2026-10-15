@@ -7,8 +7,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Locale;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,7 +33,7 @@ public final class StatsProviderUtils {
     private static final String USER_AGENT = "node-ao/2.0.3";
     private static final Logger LOGGER = LogManager.getLogger("Additional");
     private static final AtomicInteger THREAD_ID = new AtomicInteger();
-    private static final ConcurrentHashMap<String, LockEntry> LOOKUP_LOCKS = new ConcurrentHashMap<>();
+    private static final Map<String, LockEntry> LOOKUP_LOCKS = new HashMap<>();
     private static final Object CACHE_GENERATION_LOCK = new Object();
     private static long CACHE_GENERATION;
 
@@ -72,6 +73,9 @@ public final class StatsProviderUtils {
         }
     };
 
+    private static final Coordinator PROFILE_COORDINATOR =
+            new Coordinator(HTTP_PROVIDER_CLIENT, REQUEST_EXECUTOR, Thread::sleep);
+
     private StatsProviderUtils() {
     }
 
@@ -84,7 +88,7 @@ public final class StatsProviderUtils {
         LockEntry entry;
         synchronized (LOOKUP_LOCKS) {
             entry = LOOKUP_LOCKS.computeIfAbsent(key, ignored -> new LockEntry());
-            entry.references.incrementAndGet();
+            entry.references++;
         }
         entry.lock.lock();
         try {
@@ -92,7 +96,7 @@ public final class StatsProviderUtils {
         } finally {
             entry.lock.unlock();
             synchronized (LOOKUP_LOCKS) {
-                if (entry.references.decrementAndGet() == 0) {
+                if (--entry.references == 0) {
                     LOOKUP_LOCKS.remove(key, entry);
                 }
             }
@@ -148,12 +152,14 @@ public final class StatsProviderUtils {
     public static final class ResourceResult {
         private final ResourceType resource;
         private final String json;
+        private final JsonObject data;
         private final Provider provider;
         private final Status status;
 
-        private ResourceResult(ResourceType resource, String json, Provider provider, Status status) {
+        private ResourceResult(ResourceType resource, String json, JsonObject data, Provider provider, Status status) {
             this.resource = resource;
             this.json = json;
+            this.data = data;
             this.provider = provider;
             this.status = status;
         }
@@ -165,6 +171,9 @@ public final class StatsProviderUtils {
         public String getJson() {
             return json;
         }
+
+        /** The validated response, shared by the read-only stats/profile parsers. */
+        public JsonObject getData() { return data; }
 
         public Provider getProvider() {
             return provider;
@@ -244,12 +253,7 @@ public final class StatsProviderUtils {
      * Player and guild calls run independently and may use different providers.
      */
     public static ProfileData fetchProfileData(String username, String uuid, boolean needGuild) {
-        return new Coordinator(HTTP_PROVIDER_CLIENT, REQUEST_EXECUTOR, new Sleeper() {
-            @Override
-            public void sleep(long millis) throws InterruptedException {
-                Thread.sleep(millis);
-            }
-        }).fetch(username, uuid, needGuild);
+        return PROFILE_COORDINATOR.fetch(username, uuid, needGuild);
     }
 
     /**
@@ -365,8 +369,9 @@ public final class StatsProviderUtils {
             }
 
             String abyssResponse = fetchSafely(resource, Provider.ABYSS, username, uuid);
-            if (isUsableResponse(resource, abyssResponse)) {
-                return success(resource, abyssResponse, Provider.ABYSS);
+            JsonObject abyssData = parseUsableResponse(resource, abyssResponse);
+            if (abyssData != null) {
+                return success(resource, abyssResponse, abyssData, Provider.ABYSS);
             }
 
             LOGGER.info(
@@ -379,8 +384,9 @@ public final class StatsProviderUtils {
             }
 
             String shmeadoResponse = fetchSafely(resource, Provider.SHMEADO, username, uuid);
-            if (isUsableResponse(resource, shmeadoResponse)) {
-                return success(resource, shmeadoResponse, Provider.SHMEADO);
+            JsonObject shmeadoData = parseUsableResponse(resource, shmeadoResponse);
+            if (shmeadoData != null) {
+                return success(resource, shmeadoResponse, shmeadoData, Provider.SHMEADO);
             }
 
             LOGGER.info(
@@ -434,7 +440,8 @@ public final class StatsProviderUtils {
 
     private static final class LockEntry {
         private final ReentrantLock lock = new ReentrantLock();
-        private final AtomicInteger references = new AtomicInteger();
+        // All reference changes are under LOOKUP_LOCKS' monitor.
+        private int references;
     }
 
     interface ProviderClient {
@@ -445,20 +452,20 @@ public final class StatsProviderUtils {
         void sleep(long millis) throws InterruptedException;
     }
 
-    private static ResourceResult success(ResourceType resource, String json, Provider provider) {
-        return new ResourceResult(resource, json, provider, Status.SUCCESS);
+    private static ResourceResult success(ResourceType resource, String json, JsonObject data, Provider provider) {
+        return new ResourceResult(resource, json, data, provider, Status.SUCCESS);
     }
 
     private static ResourceResult unavailable(ResourceType resource) {
-        return new ResourceResult(resource, null, null, Status.UNAVAILABLE);
+        return new ResourceResult(resource, null, null, null, Status.UNAVAILABLE);
     }
 
     private static ResourceResult interrupted(ResourceType resource) {
-        return new ResourceResult(resource, null, null, Status.INTERRUPTED);
+        return new ResourceResult(resource, null, null, null, Status.INTERRUPTED);
     }
 
     private static ResourceResult notRequested(ResourceType resource) {
-        return new ResourceResult(resource, null, null, Status.NOT_REQUESTED);
+        return new ResourceResult(resource, null, null, null, Status.NOT_REQUESTED);
     }
 
     private static ProfileData interruptedProfile(ResourceResult player, ResourceResult guild) {
@@ -477,24 +484,24 @@ public final class StatsProviderUtils {
         }
     }
 
-    private static boolean isUsableResponse(ResourceType resource, String response) {
+    private static JsonObject parseUsableResponse(ResourceType resource, String response) {
         if (!hasResponse(response)) {
-            return false;
+            return null;
         }
 
         try {
             JsonElement root = new JsonParser().parse(response);
             if (!root.isJsonObject()) {
-                return false;
+                return null;
             }
             if (resource == ResourceType.GUILD) {
-                return true;
+                return root.getAsJsonObject();
             }
 
             JsonElement player = root.getAsJsonObject().get("player");
-            return player != null && (player.isJsonNull() || player.isJsonObject());
+            return player != null && (player.isJsonNull() || player.isJsonObject()) ? root.getAsJsonObject() : null;
         } catch (Exception e) {
-            return false;
+            return null;
         }
     }
 

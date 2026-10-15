@@ -1,13 +1,17 @@
 package me.waffles.additional.mixin;
 
 import me.waffles.additional.config.ModConfig;
+import me.waffles.additional.Additional;
 import me.waffles.additional.render.NameTagESP;
+import me.waffles.additional.render.PlayerNametagCache;
 import me.waffles.additional.util.BotUtils;
 import net.minecraft.client.render.platform.GlStateManager;
+import net.minecraft.client.render.TextRenderer;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.entity.living.LivingEntity;
 import net.minecraft.entity.living.player.PlayerEntity;
 import net.minecraft.scoreboard.team.AbstractTeam;
+import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -18,6 +22,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = LivingEntityRenderer.class, priority = 1100)
 public class RenderLivingEntityMixin {
 
+    @Redirect(method = "renderNameTag(Lnet/minecraft/entity/living/LivingEntity;DDD)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/TextRenderer;getWidth(Ljava/lang/String;)I"))
+    private int additional$reuseSneakingLabelWidth(TextRenderer renderer, String text) {
+        return NameTagESP.getTextWidth(renderer, text);
+    }
+
+    @Redirect(method = "renderNameTag(Lnet/minecraft/entity/living/LivingEntity;DDD)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/living/LivingEntity;getDisplayName()Lnet/minecraft/text/Text;"))
+    private Text additional$cachedPlayerName(LivingEntity entity) {
+        return entity instanceof PlayerEntity
+                ? ((PlayerNametagCache) entity).additional$getNametagText(Additional.nametagTextTick)
+                : entity.getDisplayName();
+    }
+
     @Inject(
             method = "renderNameTag(Lnet/minecraft/entity/living/LivingEntity;DDD)V",
             at = @At("HEAD"), cancellable = true
@@ -26,12 +44,6 @@ public class RenderLivingEntityMixin {
         // Draw eligible player labels once, after terrain, translucent blocks and
         // weather. The late pass calls this renderer again with the ESP pass active.
         if (NameTagESP.shouldDefer(entity)) ci.cancel();
-    }
-
-    @Redirect(method = "renderNameTag(Lnet/minecraft/entity/living/LivingEntity;DDD)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/platform/GlStateManager;depthMask(Z)V"))
-    private void keepSneakingLabelDepthReadOnly(boolean mask) {
-        GlStateManager.depthMask(mask && !NameTagESP.isRenderingEsp());
     }
 
     // Vanilla has accepted visibility and range before reaching alphaFunc.

@@ -20,6 +20,7 @@ public class Additional implements ClientModInitializer {
     public static Cache<String, Bedwars> bedwarsStatsList;
     public static Cache<String, PlayerProfile> playerProfileList;
     private static int cacheCleanupTicks;
+    public static int nametagTextTick;
 
     @Override
     public void onInitializeClient() {
@@ -32,6 +33,7 @@ public class Additional implements ClientModInitializer {
     }
 
     public static void tickStart() {
+        nametagTextTick++;
         Minecraft minecraft = Minecraft.getInstance();
         if (config != null && minecraft.player != null && ModConfig.ndj) {
             EntityLivingBaseAccessor player = (EntityLivingBaseAccessor) minecraft.player;
@@ -51,5 +53,6 @@ public class Additional implements ClientModInitializer {
     public static void worldChanged() {
         // Includes lobby/game transfers and disconnects.
         BotUtils.clearCache();
+        nametagTextTick++;
     }
 }

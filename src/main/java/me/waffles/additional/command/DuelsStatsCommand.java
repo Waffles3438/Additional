@@ -2,6 +2,7 @@ package me.waffles.additional.command;
 
 import me.waffles.additional.util.ClientTasks;
 import com.mojang.authlib.GameProfile;
+import com.google.gson.JsonObject;
 import me.waffles.additional.Additional;
 import me.waffles.additional.api.AbyssAPIUtils;
 import me.waffles.additional.util.PlayerUuidResolver;
@@ -87,7 +88,7 @@ public class DuelsStatsCommand {
                 return;
             }
 
-            String stjson = playerData.getJson();
+            JsonObject stjson = playerData.getData();
             final Duels fetchedStats = needStats
                     ? AbyssAPIUtils.parseDuelsPlayerData(stjson)
                     : null;
@@ -96,9 +97,9 @@ public class DuelsStatsCommand {
 
             if (needProfile) {
                 StatsProviderUtils.ResourceResult guildData = profileData.getGuild();
-                String guild = "{}";
+                JsonObject guild = new JsonObject();
                 if (guildData.isSuccess()) {
-                    guild = guildData.getJson();
+                    guild = guildData.getData();
                 } else if (guildData.isUnavailable()) {
                     guildUnavailable = true;
                 }

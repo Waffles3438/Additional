@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.Culler;
 import net.minecraft.client.render.Frustum;
 import net.minecraft.client.render.FrustumCuller;
+import net.minecraft.client.render.TextRenderer;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
@@ -19,20 +20,34 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 public class NameTagESP {
     private final Minecraft mc = Minecraft.getInstance();
-    private final List<PlayerEntity> candidates = new ArrayList<>(16);
     private final RenderState previous = new RenderState();
     private Culler worldFrustum;
     private Culler fallbackFrustum;
     private float passTickDelta;
+    private TextRenderer widthRenderer;
+    private String widthText;
+    private int textWidth;
     private static NameTagESP activePass;
     private static boolean dispatcherPrepared;
 
     public static boolean isRenderingEsp() { return activePass != null; }
+
+    public static int getTextWidth(TextRenderer renderer, String text) {
+        NameTagESP pass = activePass;
+        if (pass == null) return renderer.getWidth(text);
+        // Vanilla measures the same string three times for one label. Keep this
+        // cache within the pass so resource/font changes are never held across frames.
+        if (pass.widthRenderer != renderer || !java.util.Objects.equals(pass.widthText, text)) {
+            pass.textWidth = renderer.getWidth(text);
+            pass.widthRenderer = renderer;
+            pass.widthText = text;
+        }
+        return pass.textWidth;
+    }
 
     public void beginWorldPass() {
         // Each anaglyph eye needs its own prepared frustum and dispatcher state.
@@ -64,73 +79,68 @@ public class NameTagESP {
         PlayerEntity viewer = mc.player;
         if (viewer == null || mc.world == null) return;
 
-        candidates.clear();
         Entity camera = mc.getCamera();
         if (camera == null) camera = viewer;
         double px = camera.prevX + (camera.x - camera.prevX) * tickDelta;
         double py = camera.prevY + (camera.y - camera.prevY) * tickDelta;
         double pz = camera.prevZ + (camera.z - camera.prevZ) * tickDelta;
-
         boolean extendedRange = ModConfig.extendNametagRange;
         boolean showSneaking = ModConfig.nametagsOnShift;
         Culler frustum = worldFrustum;
-        List<PlayerEntity> players = mc.world.players;
-        for (int i = 0, count = players.size(); i < count; i++) {
-            PlayerEntity player = players.get(i);
-            if (player == viewer || player.removed || player.deathTicks > 0 || !player.inChunk) continue;
-            // Chunk membership and death animation state prevent stale, shaking labels.
-            // Health is deliberately omitted: servers can report fake health for players.
-            // Match the living renderer's range before bot, frustum and GL work.
-            double rangeSquared = extendedRange ? 65536.0
-                    : (!showSneaking && player.isSneaking() ? 1024.0 : 4096.0);
-            if (player.squaredDistanceTo(camera) >= rangeSquared || BotUtils.isBot(player)) continue;
-            if (frustum == null) {
-                // Fallback for render paths that bypass vanilla's setupRender.
-                if (fallbackFrustum == null) fallbackFrustum = new FrustumCuller();
-                else Frustum.getInstance();
-                frustum = fallbackFrustum;
-                frustum.prepare(px, py, pz);
-            }
-            if (frustum.isVisible(player.getShape())) candidates.add(player);
-        }
-        if (candidates.isEmpty()) return;
-
         EntityRenderDispatcher dispatcher = mc.getEntityRenderDispatcher();
-        // WorldRenderer normally prepares it already; retain the fallback for
-        // debug-camera rendering and the first frames after a world change.
-        if (!dispatcherPrepared) {
-            dispatcher.prepare(mc.world, mc.textRenderer, camera, mc.targetEntity, mc.options, tickDelta);
-        }
+        List<PlayerEntity> players = mc.world.players;
+        boolean passStarted = false;
         passTickDelta = tickDelta;
-        // Keep the wrapper outside renderer calls so other mods can balance
-        // their own matrix/state changes around the whole native method.
-        previous.capture();
-        GlStateManager.pushMatrix();
-        activePass = this;
         try {
-            mc.gameRenderer.enableLightMap();
-            // Vanilla re-enables depth testing for opaque and sneaking text.
-            // ALWAYS covers both; label mixins prevent depth writes in this pass.
-            GlStateManager.depthFunc(GL11.GL_ALWAYS);
-            GlStateManager.depthMask(false);
-            for (int i = 0, count = candidates.size(); i < count; i++) {
-                PlayerEntity player = candidates.get(i);
+            // World/player updates run on this client thread outside rendering.
+            // Filter and draw in one scan without retaining a candidate list.
+            for (int i = 0, count = players.size(); i < count; i++) {
+                PlayerEntity player = players.get(i);
+                if (player == viewer || player.removed || player.deathTicks > 0 || !player.inChunk) continue;
+                // Servers can report fake health, so use removal/death/chunk state.
+                double rangeSquared = extendedRange ? 65536.0
+                        : (!showSneaking && player.isSneaking() ? 1024.0 : 4096.0);
+                if (player.squaredDistanceTo(camera) >= rangeSquared || BotUtils.isBot(player)) continue;
+                if (frustum == null) {
+                    // Render paths that bypass vanilla's setupRender still work.
+                    if (fallbackFrustum == null) fallbackFrustum = new FrustumCuller();
+                    else Frustum.getInstance();
+                    frustum = fallbackFrustum;
+                    frustum.prepare(px, py, pz);
+                }
+                if (!frustum.isVisible(player.getShape())) continue;
                 EntityRenderer<?> renderer = dispatcher.getRenderer(player);
                 if (!(renderer instanceof LivingEntityRenderer)) continue;
+                if (!passStarted) {
+                    if (!dispatcherPrepared) {
+                        dispatcher.prepare(mc.world, mc.textRenderer, camera, mc.targetEntity, mc.options, tickDelta);
+                    }
+                    previous.capture();
+                    GlStateManager.pushMatrix();
+                    passStarted = true;
+                    activePass = this;
+                    mc.gameRenderer.enableLightMap();
+                    // GlStateManagerMixin protects depth writes in every renderer,
+                    // including PolyNametag's sneaking and shadow paths.
+                    GlStateManager.depthFunc(GL11.GL_ALWAYS);
+                    GlStateManager.depthMask(false);
+                }
                 double x = player.prevX + (player.x - player.prevX) * tickDelta - px;
                 double y = player.prevY + (player.y - player.prevY) * tickDelta - py;
                 double z = player.prevZ + (player.z - player.prevZ) * tickDelta - pz;
-                // The normal renderer preserves scoreboard rules and inline nametag mods.
+                // Preserve native visibility/scoreboard rules and nametag mods.
                 ((LivingEntityRenderer<PlayerEntity>) renderer).renderNameTag(player, x, y, z);
             }
         } finally {
-            activePass = null;
-            // Keep capacity for the next frame without retaining departed players.
-            candidates.clear();
-            previous.restoreLightmap();
-            mc.gameRenderer.disableLightMap();
-            GlStateManager.popMatrix();
-            previous.restore();
+            if (passStarted) {
+                activePass = null;
+                widthRenderer = null;
+                widthText = null;
+                previous.restoreLightmap();
+                mc.gameRenderer.disableLightMap();
+                GlStateManager.popMatrix();
+                previous.restore();
+            }
         }
     }
 

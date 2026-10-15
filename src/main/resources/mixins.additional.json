@@ -3,12 +3,16 @@
   "compatibilityLevel": "JAVA_25",
   "minVersion": "0.8",
   "package": "me.waffles.additional.mixin",
+  "plugin": "me.waffles.additional.AdditionalMixinPlugin",
   "injectors": { "defaultRequire": 1 },
   "client": [
     "RenderLivingEntityMixin",
     "EntityLivingBaseAccessor",
+    "PlayerNametagCacheMixin",
     "EntityRenderDispatcherMixin",
     "RenderMixin",
+    "PolyNametagCompatMixin",
+    "GlStateManagerMixin",
     "MinecraftMixin",
     "GameRendererMixin"
   ]

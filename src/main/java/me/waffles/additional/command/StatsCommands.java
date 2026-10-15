@@ -7,7 +7,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.PlayerInfo;
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 
-import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -34,11 +33,12 @@ public final class StatsCommands {
 
     private static CompletableFuture<Suggestions> suggestPlayers(SuggestionsBuilder builder) {
         Minecraft client = Minecraft.getInstance();
-        if (client.world != null && client.getNetworkHandler() != null) {
-            String prefix = builder.getRemaining().toLowerCase(Locale.ROOT);
-            for (PlayerInfo info : client.getNetworkHandler().getOnlinePlayers()) {
+        var network = client.getNetworkHandler();
+        if (client.world != null && network != null) {
+            String prefix = builder.getRemaining();
+            for (PlayerInfo info : network.getOnlinePlayers()) {
                 String name = info.getProfile().getName();
-                if (name != null && name.toLowerCase(Locale.ROOT).startsWith(prefix)) builder.suggest(name);
+                if (name != null && name.regionMatches(true, 0, prefix, 0, prefix.length())) builder.suggest(name);
             }
         }
         return builder.buildFuture();

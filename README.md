@@ -23,6 +23,10 @@ On Linux/macOS use `./gradlew` instead. The distributable is `build/libs/additio
 
 ## Port compatibility
 
+See [PERFORMANCE.md](PERFORMANCE.md) for measured render-pass timings, allocation reductions, caching behavior and validation.
+
 This build replaces Forge metadata, events, and LaunchWrapper with Fabric client initialization and Minecraft mixins. The Forge-only RenderLib occlusion fallback and the deferred-render bridge for old Forge PolyNametag were removed. The late nametag pass calls the normal player renderer, allowing inline renderer modifications to apply; compatibility with other Ornithe nametag/culling mods still needs multiplayer testing. Reconfigure options in OneConfig V1 when moving from a Forge instance; automatic conversion of V0 configuration files is not provided.
+
+With PolyNametag 1.2.4, Additional's **Show nametags on shift** overrides its dim sneaking-label style while the nametag master switch is enabled. PolyNametag's colors, scale, background and text shadow still apply. The compatibility hook is optional; PolyNametag is not required.
 
 Implementation references: [OneConfig V1 setup](https://docsv1.polyfrost.org/introduction/getting-started), [OneConfig source](https://github.com/Polyfrost/OneConfig), and [Ornithe's development guide](https://wiki.ornithemc.net/wiki/Setting_up_a_Mod_Development_Environment).
