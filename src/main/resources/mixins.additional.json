@@ -9,6 +9,7 @@
     "RenderLivingEntityMixin",
     "EntityLivingBaseAccessor",
     "PlayerNametagCacheMixin",
+    "PlayerNametagTextMixin",
     "EntityRenderDispatcherMixin",
     "RenderMixin",
     "PolyNametagCompatMixin",

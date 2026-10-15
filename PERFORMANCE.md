@@ -29,10 +29,13 @@ The comparison fixes the name-text cache cadence to one refresh per twelve rende
 
 Names produced by another mod's per-frame animation are sampled at client-tick rate. PolyNametag's renderer-level colors, scale, backgrounds and shadows remain live. Glyph drawing still scales with the number and length of visible labels; batching or replacing that renderer would require a separate compatibility design.
 
+When Sarcio is installed, its rendered-name optimization replaces Additional's name-text redirect. This avoids competing redirects while keeping the other rendering optimizations and nametag options active. The measurements above were taken without Sarcio.
+
 ## Validation
 
 - 28 regression tests pass, including overlapping UUID requests, retry/error behavior, shared parsing, text formatting, copies and per-frame decorations.
 - Fourteen render cases pass both with and without PolyNametag: standing/sneaking labels, master/feature toggles, ranges and text shadows.
 - Runtime checks cover same-tick team/prefix updates, tick refresh, bot-cache invalidation, late tab arrival and unchanged depth-buffer values.
 - The shift option preserves the sneaking label's height, with and without PolyNametag, in both normal and ESP rendering. The PolyNametag hooks change only its visibility checks, leaving its height adjustment intact.
+- The Sarcio 1.1.0 redirect conflict was reproduced, then all fourteen render cases passed with Sarcio and PolyNametag together after the compatibility fix.
 - `build` succeeds; profiling fixtures and PolyNametag are not bundled in the distributable.
