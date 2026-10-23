@@ -100,6 +100,9 @@ public class ModConfig extends Config {
 
     private static void toggleNametags() {
         Additional.config.getProperty("masterSwitch").setAs(!masterSwitch);
+        // OneConfig only writes configs when its settings screen closes or the JVM shuts down
+        // cleanly. A keybind toggle does neither, so write it now or a kill/crash loses the state.
+        Additional.config.save();
         Notifications.info("Additional", (masterSwitch ? "Enabled" : "Disabled") + " nametag additions", 3000f);
     }
 
