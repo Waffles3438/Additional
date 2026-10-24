@@ -3,11 +3,9 @@ package me.waffles.additional.mixin;
 import com.bawnorton.mixinsquared.TargetHandler;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.sugar.Local;
-import me.waffles.additional.config.ModConfig;
-import me.waffles.additional.util.BotUtils;
+import me.waffles.additional.render.NameTagESP;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.living.player.PlayerEntity;
 import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -39,7 +37,7 @@ public abstract class PolyNametagCompatMixin {
     private static boolean additional$showSneakingName(Entity entity) {
         // Preserve PolyNametag's separate height adjustment. Changing its shared
         // sneakLook helper also raises the label when this option is enabled.
-        return ModConfig.masterSwitch && ModConfig.nametagsOnShift
-                && entity instanceof PlayerEntity && !BotUtils.isBot(entity);
+        // NameTagESP uses the same rule to decide when a sneaking label is opaque.
+        return NameTagESP.showsSneakingName(entity);
     }
 }

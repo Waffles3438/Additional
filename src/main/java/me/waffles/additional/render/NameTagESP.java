@@ -31,6 +31,7 @@ public class NameTagESP {
     private TextRenderer widthRenderer;
     private String widthText;
     private int textWidth;
+    private boolean hideNextText;
     private static NameTagESP activePass;
     private static boolean dispatcherPrepared;
 
@@ -68,6 +69,34 @@ public class NameTagESP {
         GLX.multiTexCoord2f(GLX.GL_TEXTURE1, light % 65536, light / 65536);
     }
 
+    /** True when Additional draws sneaking player labels the same as standing ones. */
+    public static boolean showsSneakingName(Entity entity) {
+        return ModConfig.masterSwitch && ModConfig.nametagsOnShift
+                && entity instanceof PlayerEntity && !BotUtils.isBot(entity);
+    }
+
+    /** Called when a label starts drawing, before its background and text. */
+    public static void beginLabel(Entity entity) {
+        NameTagESP pass = activePass;
+        if (pass == null) return;
+        // A label draws its text twice: a faint copy with depth testing off, then
+        // an opaque copy. Sneaking labels can be drawn as the faint copy alone
+        // (vanilla and PolyNametag), so keep it unless the opaque copy is certain.
+        pass.hideNextText = !entity.isSneaking() || showsSneakingName(entity);
+    }
+
+    /**
+     * Skips the faint copy of an ESP label's text. The pass draws with
+     * depthFunc ALWAYS, so the opaque copy lands on the same pixels and covers it.
+     */
+    public static boolean consumeHiddenText() {
+        NameTagESP pass = activePass;
+        if (pass == null || !pass.hideNextText) return false;
+        pass.hideNextText = false;
+        // Only the faint copy is drawn with depth testing disabled.
+        return !GlStateManager.DEPTH.state.enabled;
+    }
+
     public static boolean shouldDefer(Entity entity) {
         return !isRenderingEsp() && ModConfig.masterSwitch && ModConfig.nametagsThroughWalls
                 && entity instanceof PlayerEntity && !BotUtils.isBot(entity);
@@ -90,6 +119,7 @@ public class NameTagESP {
         EntityRenderDispatcher dispatcher = mc.getEntityRenderDispatcher();
         List<PlayerEntity> players = mc.world.players;
         boolean passStarted = false;
+        Object argentumBatch = null;
         passTickDelta = tickDelta;
         try {
             // World/player updates run on this client thread outside rendering.
@@ -124,6 +154,9 @@ public class NameTagESP {
                     // including PolyNametag's sneaking and shadow paths.
                     GlStateManager.depthFunc(GL11.GL_ALWAYS);
                     GlStateManager.depthMask(false);
+                    // Argentum batches labels only inside its entity pass, which
+                    // has already flushed. Reopen it so ESP labels share its draws.
+                    argentumBatch = ArgentumNameTags.begin();
                 }
                 double x = player.prevX + (player.x - player.prevX) * tickDelta - px;
                 double y = player.prevY + (player.y - player.prevY) * tickDelta - py;
@@ -133,7 +166,10 @@ public class NameTagESP {
             }
         } finally {
             if (passStarted) {
+                // Flush while the ESP depth and lightmap state are still active.
+                ArgentumNameTags.end(argentumBatch);
                 activePass = null;
+                hideNextText = false;
                 widthRenderer = null;
                 widthText = null;
                 previous.restoreLightmap();
