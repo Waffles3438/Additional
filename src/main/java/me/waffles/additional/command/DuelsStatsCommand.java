@@ -1,152 +1,25 @@
 package me.waffles.additional.command;
 
 import me.waffles.additional.util.ClientTasks;
-import com.mojang.authlib.GameProfile;
-import com.google.gson.JsonObject;
-import me.waffles.additional.Additional;
-import me.waffles.additional.api.AbyssAPIUtils;
-import me.waffles.additional.util.PlayerUuidResolver;
-import me.waffles.additional.api.StatsProviderUtils;
 import me.waffles.additional.playerData.Duels;
 import me.waffles.additional.playerData.PlayerProfile;
-import net.minecraft.client.Minecraft;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-import java.util.Locale;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
 public class DuelsStatsCommand {
-    private static final Logger LOGGER = LogManager.getLogger("Additional");
-
 
     public void execute() {
-        String Username = Minecraft.getInstance().getSession().getProfile().getName();
-        String uuid = Minecraft.getInstance().getSession().getProfile().getId().toString();
-
-        ClientTasks.runAsync(() ->
-            fetchAndPrintStats(Username, uuid)
-        );
+        StatsLookup.self(StatsLookup.Mode.DUELS, this::printStats);
     }
 
     public void execute(String username) {
-        GameProfile localProfile = PlayerUuidResolver.findLocalProfile(username);
-        ClientTasks.runAsync(() -> {
-            if (username == null || username.isEmpty()) {
-                ClientTasks.chat("Invalid player");
-                return;
-            }
-
-            String key = username.toLowerCase(Locale.ROOT);
-            PlayerProfile cachedProfile = Additional.playerProfileList.getIfPresent(key);
-            Duels cachedStats = Additional.duelsStatsList.getIfPresent(key);
-            if (cachedProfile != null && cachedStats != null) {
-                printStats(username, cachedProfile, cachedStats);
-                return;
-            }
-
-            String uuid = PlayerUuidResolver.INSTANCE.resolveUuid(username, localProfile);
-            if (uuid == null) {
-                ClientTasks.chat("Invalid player");
-                return;
-            }
-
-            fetchAndPrintStats(username, uuid);
-        });
+        StatsLookup.named(username, StatsLookup.Mode.DUELS, this::printStats);
     }
 
-    private void fetchAndPrintStats(String Username, String uuid) {
-        StatsProviderUtils.withPlayerLock(
-                Username,
-                () -> fetchAndPrintStatsLocked(Username, uuid)
-        );
-    }
-
-    private void fetchAndPrintStatsLocked(String Username, String uuid) {
-        String key = Username.toLowerCase(Locale.ROOT);
-
-        // fetch stats here
-        // Keep snapshots so expiration during a request cannot invalidate printing.
-        PlayerProfile cachedProfile = Additional.playerProfileList.getIfPresent(key);
-        Duels cachedStats = Additional.duelsStatsList.getIfPresent(key);
-        boolean needProfile = cachedProfile == null;
-        boolean needStats = cachedStats == null;
-
-        if (needProfile || needStats) {
-            long cacheGeneration = StatsProviderUtils.captureCacheGeneration();
-            StatsProviderUtils.ProfileData profileData =
-                    StatsProviderUtils.fetchProfileData(Username, uuid, needProfile);
-            if (profileData.isInterrupted()) {
-                return;
-            }
-
-            StatsProviderUtils.ResourceResult playerData = profileData.getPlayer();
-            if (!playerData.isSuccess()) {
-                LOGGER.warn("Player data was unavailable for {} after all provider cycles.", Username);
-                ClientTasks.chat("Something went wrong while fetching stats for " + Username + ". Please try again.");
-                return;
-            }
-
-            JsonObject stjson = playerData.getData();
-            final Duels fetchedStats = needStats
-                    ? AbyssAPIUtils.parseDuelsPlayerData(stjson)
-                    : null;
-            final PlayerProfile fetchedProfile;
-            boolean guildUnavailable = false;
-
-            if (needProfile) {
-                StatsProviderUtils.ResourceResult guildData = profileData.getGuild();
-                JsonObject guild = new JsonObject();
-                if (guildData.isSuccess()) {
-                    guild = guildData.getData();
-                } else if (guildData.isUnavailable()) {
-                    guildUnavailable = true;
-                }
-                fetchedProfile = AbyssAPIUtils.parsePlayerProfilePlayerData(stjson, guild);
-            } else {
-                fetchedProfile = null;
-            }
-
-            boolean committed = StatsProviderUtils.commitIfCurrent(cacheGeneration, () -> {
-                if (needStats) {
-                    Additional.duelsStatsList.put(key, fetchedStats);
-                }
-                if (needProfile) {
-                    Additional.playerProfileList.put(key, fetchedProfile);
-                }
-            });
-            if (!committed) {
-                return;
-            }
-            if (needStats) {
-                cachedStats = fetchedStats;
-            }
-            if (needProfile) {
-                cachedProfile = fetchedProfile;
-            }
-
-            if (playerData.getProvider() == StatsProviderUtils.Provider.SHMEADO) {
-                LOGGER.info("Using Shmeado instead of Abyss for {} Duels player data.", Username);
-            }
-            if (needProfile) {
-                StatsProviderUtils.ResourceResult guildData = profileData.getGuild();
-                if (guildData.isSuccess()
-                        && guildData.getProvider() == StatsProviderUtils.Provider.SHMEADO) {
-                    LOGGER.info("Using Shmeado instead of Abyss for {} Duels guild data.", Username);
-                }
-                if (guildUnavailable) {
-                    LOGGER.warn("Guild data was unavailable for {}; showing stats without a guild tag.", Username);
-                    ClientTasks.chat(Username + " guild data is unavailable; showing stats without a guild tag.");
-                }
-            }
-        }
-
-        // print stats here
-        printStats(Username, cachedProfile, cachedStats);
-    }
-
-    private void printStats(String Username, PlayerProfile profile, Duels duelsStats) {
+    private void printStats(String Username, StatsLookup.Snapshot snapshot) {
+        PlayerProfile profile = snapshot.profile();
+        Duels duelsStats = snapshot.duels();
 
         if(profile == null) {
             ClientTasks.chat("Invalid player");
@@ -185,20 +58,6 @@ public class DuelsStatsCommand {
                 hasWinstreaks ? "Current Winstreak: " + duelscws : null,
                 hasWinstreaks ? "Best Winstreak: " + duelsbws : null,
                 "§9------------------------------------------"
-        );
-    }
-
-    public String fetchPlayerData(String uuid) {
-        return AbyssAPIUtils.fetchPlayerData(
-                "http://api.abyssoverlay.com/player?uuid=" + uuid,
-                "node-ao/2.0.3"
-        );
-    }
-
-    public String fetchPlayerGuildData(String uuid) {
-        return AbyssAPIUtils.fetchPlayerData(
-                "http://api.abyssoverlay.com/guild?uuid=" + uuid,
-                "node-ao/2.0.3"
         );
     }
 

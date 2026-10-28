@@ -52,7 +52,8 @@ public class StatsProviderUtilsTest {
 
     @Before
     public void setUp() {
-        executor = Executors.newFixedThreadPool(2);
+        // Room for both providers of both resources, as hedged rounds can run four requests.
+        executor = Executors.newFixedThreadPool(4);
         sleeper = new RecordingSleeper();
     }
 
@@ -179,6 +180,105 @@ public class StatsProviderUtilsTest {
     }
 
     @Test
+    public void slowAbyssStartsShmeadoAndTheFirstUsableAnswerWins() throws Exception {
+        CountDownLatch abyssCancelled = new CountDownLatch(1);
+        AtomicInteger shmeadoCalls = new AtomicInteger();
+        StatsProviderUtils.ProviderClient client = (resource, provider, username, uuid) -> {
+            if (provider == StatsProviderUtils.Provider.ABYSS) {
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    abyssCancelled.countDown();
+                }
+                return "";
+            }
+            shmeadoCalls.incrementAndGet();
+            return "{\"player\":{\"displayname\":\"Shmeado\"}}";
+        };
+
+        long started = System.nanoTime();
+        StatsProviderUtils.ProfileData result = hedgedCoordinator(client).fetch("Player", "uuid", false);
+        long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
+
+        assertTrue(result.getPlayer().isSuccess());
+        assertSame(StatsProviderUtils.Provider.SHMEADO, result.getPlayer().getProvider());
+        assertEquals(1, shmeadoCalls.get());
+        assertTrue("hedge did not cut the wait: " + elapsedMillis + " ms", elapsedMillis < 2000);
+        // The losing Abyss request is cancelled rather than left running.
+        assertTrue(abyssCancelled.await(2, TimeUnit.SECONDS));
+        assertEquals(0, sleeper.waits.size());
+    }
+
+    @Test
+    public void slowAbyssStillAnswersWhenHedgedShmeadoFails() {
+        StatsProviderUtils.ProviderClient client = (resource, provider, username, uuid) -> {
+            if (provider == StatsProviderUtils.Provider.SHMEADO) {
+                return "";
+            }
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                return "";
+            }
+            return "{\"player\":{\"displayname\":\"Abyss\"}}";
+        };
+
+        StatsProviderUtils.ProfileData result = hedgedCoordinator(client).fetch("Player", "uuid", false);
+
+        assertTrue(result.getPlayer().isSuccess());
+        assertSame(StatsProviderUtils.Provider.ABYSS, result.getPlayer().getProvider());
+        assertEquals(0, sleeper.waits.size());
+    }
+
+    @Test
+    public void hedgedCycleFailsOnlyAfterBothProvidersFail() {
+        AtomicInteger abyssCalls = new AtomicInteger();
+        AtomicInteger shmeadoCalls = new AtomicInteger();
+        StatsProviderUtils.ProviderClient client = (resource, provider, username, uuid) -> {
+            if (provider == StatsProviderUtils.Provider.SHMEADO) {
+                shmeadoCalls.incrementAndGet();
+                return "";
+            }
+            abyssCalls.incrementAndGet();
+            try {
+                Thread.sleep(150);
+            } catch (InterruptedException e) {
+                return "";
+            }
+            return "";
+        };
+
+        StatsProviderUtils.ProfileData result = hedgedCoordinator(client).fetch("Player", "uuid", false);
+
+        assertTrue(result.getPlayer().isUnavailable());
+        assertEquals(3, abyssCalls.get());
+        assertEquals(3, shmeadoCalls.get());
+        assertEquals(Arrays.asList(1000L, 1000L), new ArrayList<>(sleeper.waits));
+    }
+
+    @Test
+    public void fastAbyssNeverStartsShmeado() throws Exception {
+        AtomicInteger shmeadoCalls = new AtomicInteger();
+        StatsProviderUtils.ProviderClient client = (resource, provider, username, uuid) -> {
+            if (provider == StatsProviderUtils.Provider.SHMEADO) {
+                shmeadoCalls.incrementAndGet();
+                return "";
+            }
+            return resource == StatsProviderUtils.ResourceType.PLAYER
+                    ? "{\"player\":{}}"
+                    : "{\"tag\":\"ABYSS\"}";
+        };
+
+        StatsProviderUtils.ProfileData result = hedgedCoordinator(client).fetch("Player", "uuid", true);
+        // Leave time for a hedge that should not exist.
+        Thread.sleep(150);
+
+        assertTrue(result.getPlayer().isSuccess());
+        assertTrue(result.getGuild().isSuccess());
+        assertEquals(0, shmeadoCalls.get());
+    }
+
+    @Test
     public void invalidatedCacheGenerationRejectsLateCommit() {
         long generation = StatsProviderUtils.captureCacheGeneration();
         StatsProviderUtils.invalidateCacheGeneration();
@@ -237,6 +337,11 @@ public class StatsProviderUtilsTest {
 
     private StatsProviderUtils.Coordinator coordinator(StatsProviderUtils.ProviderClient client) {
         return new StatsProviderUtils.Coordinator(client, executor, sleeper);
+    }
+
+    /** Hedges after 50 ms so slow-provider cases run quickly. */
+    private StatsProviderUtils.Coordinator hedgedCoordinator(StatsProviderUtils.ProviderClient client) {
+        return new StatsProviderUtils.Coordinator(client, executor, sleeper, 50, 50);
     }
 
     private static String key(StatsProviderUtils.ResourceType resource, StatsProviderUtils.Provider provider) {

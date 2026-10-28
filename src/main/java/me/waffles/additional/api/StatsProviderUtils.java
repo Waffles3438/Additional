@@ -6,59 +6,71 @@ import com.google.gson.JsonParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Locale;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Coordinates player and guild requests across the available providers.
  *
- * Player and guild data are independent resources. Each missing resource gets
- * one Abyss attempt followed immediately by one Shmeado attempt per cycle.
- * Missing resources are retried on their own after an interruptible wait.
+ * Player and guild data are independent resources. Each cycle asks Abyss first.
+ * Shmeado is asked as soon as Abyss fails, or in parallel once Abyss is slower
+ * than it normally is, and the first usable answer wins. Missing resources are
+ * retried on their own after an interruptible wait.
  */
 public final class StatsProviderUtils {
     private static final int MAX_CYCLES = 3;
     private static final long WAIT_BETWEEN_CYCLES_MILLIS = 1000L;
+    // Measured Abyss responses: player 0.8-1.4 s (a ~580 KB body), guild 0.2-0.4 s.
+    // Past these delays Abyss is struggling. Shmeado needs ~4.5 s for a player
+    // page and ~0.4 s for a guild, so starting it then bounds the total wait.
+    private static final long PLAYER_HEDGE_MILLIS = 3000L;
+    private static final long GUILD_HEDGE_MILLIS = 1500L;
     private static final String ABYSS_PLAYER_URL = "http://api.abyssoverlay.com/player?uuid=";
     private static final String ABYSS_GUILD_URL = "http://api.abyssoverlay.com/guild?uuid=";
     private static final String USER_AGENT = "node-ao/2.0.3";
     private static final Logger LOGGER = LogManager.getLogger("Additional");
-    private static final AtomicInteger THREAD_ID = new AtomicInteger();
     private static final Map<String, LockEntry> LOOKUP_LOCKS = new HashMap<>();
     private static final Object CACHE_GENERATION_LOCK = new Object();
     private static long CACHE_GENERATION;
 
     /**
-     * Daemon workers prevent an unfinished network request from keeping the
-     * client process alive. HTTP calls are still bounded by their own timeouts.
+     * One virtual thread per HTTP request. A request that loses the race is
+     * cancelled, and interrupting a virtual thread blocked on a socket closes
+     * that socket, so abandoned requests end early instead of holding a thread.
      */
-    private static final ExecutorService REQUEST_EXECUTOR = Executors.newFixedThreadPool(
-            4,
-            new ThreadFactory() {
-                @Override
-                public Thread newThread(Runnable runnable) {
-                    Thread thread = new Thread(
-                            runnable,
-                            "additional-api-" + THREAD_ID.incrementAndGet()
-                    );
-                    thread.setDaemon(true);
-                    return thread;
-                }
-            }
-    );
+    private static final ExecutorService REQUEST_EXECUTOR = Executors.newThreadPerTaskExecutor(
+            Thread.ofVirtual().name("additional-api-", 1).factory());
+
+    /** Bounds load on the provider APIs when many players are checked at once. */
+    private static final Semaphore REQUEST_PERMITS = new Semaphore(8);
 
     private static final ProviderClient HTTP_PROVIDER_CLIENT = new ProviderClient() {
         @Override
         public String fetch(ResourceType resource, Provider provider, String username, String uuid) {
+            try {
+                REQUEST_PERMITS.acquire();
+            } catch (InterruptedException e) {
+                // Cancelled while queued because the other provider already answered.
+                Thread.currentThread().interrupt();
+                return "";
+            }
+            try {
+                return fetchNow(resource, provider, username, uuid);
+            } finally {
+                REQUEST_PERMITS.release();
+            }
+        }
+
+        private String fetchNow(ResourceType resource, Provider provider, String username, String uuid) {
             if (resource == ResourceType.PLAYER) {
                 return provider == Provider.ABYSS
                         ? AbyssAPIUtils.fetchPlayerDataOnce(ABYSS_PLAYER_URL + uuid, USER_AGENT)
@@ -276,11 +288,20 @@ public final class StatsProviderUtils {
         private final ProviderClient providerClient;
         private final ExecutorService executor;
         private final Sleeper sleeper;
+        private final long playerHedgeNanos;
+        private final long guildHedgeNanos;
 
         Coordinator(ProviderClient providerClient, ExecutorService executor, Sleeper sleeper) {
+            this(providerClient, executor, sleeper, PLAYER_HEDGE_MILLIS, GUILD_HEDGE_MILLIS);
+        }
+
+        Coordinator(ProviderClient providerClient, ExecutorService executor, Sleeper sleeper,
+                    long playerHedgeMillis, long guildHedgeMillis) {
             this.providerClient = providerClient;
             this.executor = executor;
             this.sleeper = sleeper;
+            this.playerHedgeNanos = TimeUnit.MILLISECONDS.toNanos(playerHedgeMillis);
+            this.guildHedgeNanos = TimeUnit.MILLISECONDS.toNanos(guildHedgeMillis);
         }
 
         ProfileData fetch(String username, String uuid, boolean needGuild) {
@@ -296,36 +317,27 @@ public final class StatsProviderUtils {
                     return interruptedProfile(player, guild);
                 }
 
-                Future<ResourceResult> playerFuture = playerMissing
-                        ? submit(ResourceType.PLAYER, username, uuid, cycle)
-                        : null;
-                Future<ResourceResult> guildFuture = guildMissing
-                        ? submit(ResourceType.GUILD, username, uuid, cycle)
-                        : null;
+                Round round = new Round(username, uuid, cycle);
+                if (playerMissing) {
+                    round.start(ResourceType.PLAYER);
+                }
+                if (guildMissing) {
+                    round.start(ResourceType.GUILD);
+                }
 
                 try {
-                    if (playerFuture != null) {
-                        player = getResult(playerFuture, ResourceType.PLAYER, cycle);
-                    }
-                    if (guildFuture != null) {
-                        guild = getResult(guildFuture, ResourceType.GUILD, cycle);
-                    }
+                    round.await();
                 } catch (InterruptedException e) {
-                    cancel(playerFuture);
-                    cancel(guildFuture);
+                    round.cancelAll();
                     Thread.currentThread().interrupt();
                     return interruptedProfile(player, guild);
                 }
 
-                if (player.isInterrupted() || guild.isInterrupted()) {
-                    cancel(playerFuture);
-                    cancel(guildFuture);
-                    return interruptedProfile(player, guild);
+                if (playerMissing) {
+                    player = round.result(ResourceType.PLAYER);
                 }
-                if (Thread.currentThread().isInterrupted()) {
-                    cancel(playerFuture);
-                    cancel(guildFuture);
-                    return interruptedProfile(player, guild);
+                if (guildMissing) {
+                    guild = round.result(ResourceType.GUILD);
                 }
 
                 playerMissing = !player.isSuccess();
@@ -335,8 +347,6 @@ public final class StatsProviderUtils {
                     try {
                         sleeper.sleep(WAIT_BETWEEN_CYCLES_MILLIS);
                     } catch (InterruptedException e) {
-                        cancel(playerFuture);
-                        cancel(guildFuture);
                         Thread.currentThread().interrupt();
                         return interruptedProfile(player, guild);
                     }
@@ -347,54 +357,6 @@ public final class StatsProviderUtils {
                 return interruptedProfile(player, guild);
             }
             return new ProfileData(player, guild, false);
-        }
-
-        private Future<ResourceResult> submit(
-                ResourceType resource,
-                String username,
-                String uuid,
-                int cycle
-        ) {
-            return executor.submit(() -> fetchResource(resource, username, uuid, cycle));
-        }
-
-        private ResourceResult fetchResource(
-                ResourceType resource,
-                String username,
-                String uuid,
-                int cycle
-        ) {
-            if (Thread.currentThread().isInterrupted()) {
-                return interrupted(resource);
-            }
-
-            String abyssResponse = fetchSafely(resource, Provider.ABYSS, username, uuid);
-            JsonObject abyssData = parseUsableResponse(resource, abyssResponse);
-            if (abyssData != null) {
-                return success(resource, abyssResponse, abyssData, Provider.ABYSS);
-            }
-
-            LOGGER.info(
-                    "{} request failed through Abyss on cycle {}; trying Shmeado immediately.",
-                    resourceName(resource),
-                    cycle
-            );
-            if (Thread.currentThread().isInterrupted()) {
-                return interrupted(resource);
-            }
-
-            String shmeadoResponse = fetchSafely(resource, Provider.SHMEADO, username, uuid);
-            JsonObject shmeadoData = parseUsableResponse(resource, shmeadoResponse);
-            if (shmeadoData != null) {
-                return success(resource, shmeadoResponse, shmeadoData, Provider.SHMEADO);
-            }
-
-            LOGGER.info(
-                    "{} request was unavailable through both providers on cycle {}.",
-                    resourceName(resource),
-                    cycle
-            );
-            return unavailable(resource);
         }
 
         private String fetchSafely(
@@ -416,25 +378,153 @@ public final class StatsProviderUtils {
             }
         }
 
-        private ResourceResult getResult(
-                Future<ResourceResult> future,
-                ResourceType resource,
-                int cycle
-        ) throws InterruptedException {
-            try {
-                ResourceResult result = future.get();
-                return result == null ? unavailable(resource) : result;
-            } catch (CancellationException e) {
-                return interrupted(resource);
-            } catch (ExecutionException e) {
-                LOGGER.warn(
-                        "{} request task failed on cycle {}.",
-                        resourceName(resource),
-                        cycle,
-                        e.getCause()
-                );
-                return unavailable(resource);
+        /**
+         * One cycle for the resources that are still missing. Only this
+         * coordinating thread reads or changes the request state; the request
+         * threads report through the queue.
+         */
+        private final class Round {
+            private final String username;
+            private final String uuid;
+            private final int cycle;
+            private final BlockingQueue<Attempt> completed = new LinkedBlockingQueue<>();
+            private final Request[] requests = new Request[ResourceType.values().length];
+
+            private Round(String username, String uuid, int cycle) {
+                this.username = username;
+                this.uuid = uuid;
+                this.cycle = cycle;
             }
+
+            private void start(ResourceType resource) {
+                long hedgeDelay = resource == ResourceType.PLAYER ? playerHedgeNanos : guildHedgeNanos;
+                Request request = new Request(resource, System.nanoTime() + hedgeDelay);
+                requests[resource.ordinal()] = request;
+                request.abyss = submit(resource, Provider.ABYSS);
+            }
+
+            /** Returns once every started resource has an answer or both providers failed. */
+            private void await() throws InterruptedException {
+                while (true) {
+                    boolean pending = false;
+                    long waitNanos = Long.MAX_VALUE;
+                    long now = System.nanoTime();
+                    for (Request request : requests) {
+                        if (request == null || request.result != null) {
+                            continue;
+                        }
+                        pending = true;
+                        if (request.shmeado != null) {
+                            continue;
+                        }
+                        long remaining = request.hedgeAt - now;
+                        if (remaining > 0) {
+                            waitNanos = Math.min(waitNanos, remaining);
+                        } else {
+                            LOGGER.info(
+                                    "{} request through Abyss is slow on cycle {}; starting Shmeado in parallel.",
+                                    resourceName(request.resource),
+                                    cycle
+                            );
+                            request.shmeado = submit(request.resource, Provider.SHMEADO);
+                        }
+                    }
+                    if (!pending) {
+                        return;
+                    }
+
+                    Attempt attempt = waitNanos == Long.MAX_VALUE
+                            ? completed.take()
+                            : completed.poll(waitNanos, TimeUnit.NANOSECONDS);
+                    if (attempt != null) {
+                        accept(attempt);
+                    }
+                }
+            }
+
+            private void accept(Attempt attempt) {
+                Request request = requests[attempt.resource().ordinal()];
+                if (request.result != null) {
+                    // The slower provider of a request that already has an answer.
+                    return;
+                }
+                if (attempt.data() != null) {
+                    request.result = success(attempt.resource(), attempt.json(), attempt.data(), attempt.provider());
+                    cancel(attempt.provider() == Provider.ABYSS ? request.shmeado : request.abyss);
+                    return;
+                }
+
+                if (attempt.provider() == Provider.ABYSS) {
+                    request.abyssFailed = true;
+                    if (request.shmeado == null) {
+                        LOGGER.info(
+                                "{} request failed through Abyss on cycle {}; trying Shmeado immediately.",
+                                resourceName(request.resource),
+                                cycle
+                        );
+                        request.shmeado = submit(request.resource, Provider.SHMEADO);
+                        return;
+                    }
+                } else {
+                    // Abyss may still answer after a hedged Shmeado request fails.
+                    request.shmeadoFailed = true;
+                }
+
+                if (request.abyssFailed && request.shmeadoFailed) {
+                    LOGGER.info(
+                            "{} request was unavailable through both providers on cycle {}.",
+                            resourceName(request.resource),
+                            cycle
+                    );
+                    request.result = unavailable(request.resource);
+                }
+            }
+
+            private ResourceResult result(ResourceType resource) {
+                return requests[resource.ordinal()].result;
+            }
+
+            private void cancelAll() {
+                for (Request request : requests) {
+                    if (request != null) {
+                        cancel(request.abyss);
+                        cancel(request.shmeado);
+                    }
+                }
+            }
+
+            private Future<?> submit(ResourceType resource, Provider provider) {
+                return executor.submit(() -> {
+                    String response = "";
+                    JsonObject data = null;
+                    try {
+                        response = fetchSafely(resource, provider, username, uuid);
+                        data = parseUsableResponse(resource, response);
+                    } finally {
+                        // Report even after an Error so await() can never wait forever.
+                        completed.add(new Attempt(resource, provider, response, data));
+                    }
+                });
+            }
+        }
+
+        private static final class Request {
+            private final ResourceType resource;
+            private final long hedgeAt;
+            private Future<?> abyss;
+            private Future<?> shmeado;
+            private boolean abyssFailed;
+            private boolean shmeadoFailed;
+            private ResourceResult result;
+
+            private Request(ResourceType resource, long hedgeAt) {
+                this.resource = resource;
+                this.hedgeAt = hedgeAt;
+            }
+        }
+
+        /** One provider's answer; data is null when the response was unusable. */
+        private record Attempt(ResourceType resource, Provider provider, String json, JsonObject data) {
         }
     }
 

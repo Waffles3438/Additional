@@ -9,10 +9,11 @@ import me.waffles.additional.playerData.Bedwars;
 import me.waffles.additional.playerData.Duels;
 import me.waffles.additional.playerData.PlayerProfile;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.zip.GZIPInputStream;
 
 // debugging imports
 //import java.nio.charset.StandardCharsets;
@@ -97,10 +98,9 @@ public class AbyssAPIUtils {
             String userAgent,
             String accept
     ) throws IOException {
-        HttpURLConnection connection = null;
+        HttpURLConnection connection = (HttpURLConnection) URI.create(urlString).toURL().openConnection();
+        boolean reusable = false;
         try {
-            URL url = new URL(urlString);
-            connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(CONNECT_TIMEOUT);
             connection.setReadTimeout(READ_TIMEOUT);
@@ -110,21 +110,20 @@ public class AbyssAPIUtils {
             if (accept != null) {
                 connection.setRequestProperty("Accept", accept);
             }
+            // Shmeado's ~360 KB stats page arrives as ~60 KB. Servers that do not
+            // compress, like Abyss, ignore this.
+            connection.setRequestProperty("Accept-Encoding", "gzip");
             int responseCode = connection.getResponseCode();
 
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                StringBuilder response = new StringBuilder();
-                try (BufferedReader in = new BufferedReader(
-                        new InputStreamReader(connection.getInputStream())
-                )) {
-                    String inputLine;
-
-                    while ((inputLine = in.readLine()) != null) {
-                        response.append(inputLine);
-                    }
+                String body;
+                try (InputStream in = responseStream(connection)) {
+                    body = decode(in.readAllBytes());
                 }
-
-                return response.toString();
+                // The body was read and closed, so the connection returns to the
+                // keep-alive pool for the next lookup. disconnect() would close it.
+                reusable = true;
+                return body;
             }
 
             if (responseCode == 429 || responseCode >= 500) {
@@ -132,10 +131,36 @@ public class AbyssAPIUtils {
             }
             return "";
         } finally {
-            if (connection != null) {
+            if (!reusable) {
                 connection.disconnect();
             }
         }
+    }
+
+    private static InputStream responseStream(HttpURLConnection connection) throws IOException {
+        // HttpURLConnection does not decompress on its own.
+        String encoding = connection.getContentEncoding();
+        InputStream in = connection.getInputStream();
+        return "gzip".equalsIgnoreCase(encoding) || "x-gzip".equalsIgnoreCase(encoding)
+                ? new GZIPInputStream(in)
+                : in;
+    }
+
+    private static String decode(byte[] body) {
+        String text = new String(body, StandardCharsets.UTF_8);
+        // The previous line reader dropped line breaks, and the Shmeado page
+        // patterns were written against that form. JSON is unaffected.
+        if (text.indexOf('\n') < 0 && text.indexOf('\r') < 0) {
+            return text;
+        }
+        StringBuilder joined = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c != '\n' && c != '\r') {
+                joined.append(c);
+            }
+        }
+        return joined.toString();
     }
 
     public static PlayerProfile parsePlayerProfilePlayerData(String json, String guild) {
